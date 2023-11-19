@@ -17,6 +17,7 @@ typedef struct statBST_s{
     struct statBST_s *left, *right;
     int distance;
     int carCount;
+    parkBST_t *park;
 } statBST_t;
 
 
@@ -24,28 +25,35 @@ int stringCmp(const char* , const char* );
 
 
 int main(){
-    statBST_t *start; //root of the BST containing all stations
-    char *input;
+    statBST_t *sRoot = NULL; //root of the BST containing all stations
+    char input[LEN];
+    int numOfCars;
 
-    start = malloc(sizeof (statBST_t));
-    if(start == NULL){
+    //creating root of station BST
+    sRoot = malloc(sizeof (statBST_t));
+    if(sRoot == NULL){
         printf("Memory allocation error - statBST root");
         return 1;
     }
-    input = malloc(sizeof(char)*LEN);
-    if(input == NULL){
-        printf("Memory allocation error");
-        return 1;
-    }
+    sRoot->distance = 0;
+    sRoot-> carCount = 0;
+    sRoot->left = NULL;
+    sRoot->right = NULL;
+    sRoot->park = NULL;
+
+    //getting input from stdin
     if(fgets(input, LEN, stdin) == NULL){
         printf("\nerror in fgets - input");
         return 1;
     }
-    printf("INPUT= %s",input);
+    strtok(input, "\n"); //input string has an extra \n at the end
+
 
     // while(!feof(stdin)){
     if(strcmp(input, ADDSTAT) == 0){
         printf("ADDSTAT");
+
+        //addNewStation(sRoot)
 
     } else if(strcmp(input, REMOVESTAT) == 0){
         printf("REMOVESTAT");
