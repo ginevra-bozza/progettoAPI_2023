@@ -24,7 +24,7 @@ typedef struct statBST_s{
 
 int stringCmp(const char* , const char* );
 
-statBST_t *addStation(statBST_t *, int);
+statBST_t *addStation(statBST_t **, int);
 int addCar(int, int);
 int removeStation(statBST_t *, int);
 int removeCar(int, int);
@@ -70,7 +70,7 @@ int main(){
         printf("ADDSTAT\n");
 
         scanf("%d",&distance);
-        addedStation = addStation(sRoot, distance); //addStation return a pointer to the newly added station if added, else return NULL
+        addedStation = addStation(&sRoot, distance); //addStation return a pointer to the newly added station if added, else return NULL
 
         if (addedStation != NULL){
             scanf("%d",&numOfCars);
@@ -147,39 +147,41 @@ int main(){
 
 }
 
-statBST_t *addStation(statBST_t * root, int dist) {
+statBST_t * addStation(statBST_t ** root, int dist) {
+    statBST_t* current = *root;
+    statBST_t* parent = NULL;
+    statBST_t *station = NULL;
 
-    statBST_t * tempSt = NULL;
-    statBST_t * station = NULL;
+    // Traverse the tree to find the appropriate position for the new node
+    while (current != NULL) {
+        if (dist == current->distance) {
+            // If the dist already exists in the tree, return NULL
+            return NULL;
+        } else if (dist < current->distance) {
+            parent = current;
+            current = current->left;
+        } else {
+            parent = current;
+            current = current->right;
+        }
+    }
 
     station = malloc(sizeof (statBST_t));
     if(station == NULL){
         printf("Memory allocation error - new station");
         return NULL;
     }
-
-    printf("new station created");
-
-    tempSt = malloc(sizeof (statBST_t));
-    if(tempSt == NULL){
-        printf("Memory allocation error - temp station");
-        free(station);
-        free(tempSt);
-        return NULL;
-    }
-    tempSt = root;
-    if (dist == tempSt->distance){
-        free(station);
-        free(tempSt);
-        return NULL;
-    }
-    else if (dist < tempSt->distance)
-        tempSt->left = addStation(tempSt->left, dist);
-    else if (dist > root->distance)
-        tempSt->right = addStation(tempSt->right, dist);
-
     station->distance = dist;
-    return station; //return a pointer to the added station
+    station->right = NULL;
+    station->left = NULL;
+    station->parking = NULL;
+
+    if(dist < parent->distance)
+        parent->left = station;
+    else
+        parent->right = station;
+    return station;
+
 }
 
 
