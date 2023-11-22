@@ -27,11 +27,12 @@ int stringCmp(const char* , const char* );
 
 statBST_t *addStation(statBST_t **, int);
 int addCar(carBST_t **, int);
-int removeStation(statBST_t *, int);
+int removeStation(statBST_t **, int);
 int removeCar(int, int);
 void planRoute(int, int);
+statBST_t *checkStation(statBST_t *, int distance);
 
-statBST_t *checkStation(int distance);
+statBST_t *min(struct statBST_s *pS);
 
 int main(){
     statBST_t *sRoot = NULL; //root of the BST containing all stations
@@ -56,25 +57,13 @@ int main(){
     sRoot->right = NULL;
     sRoot->parking = NULL;
 
-    printf("ROOT station : distance->%d, carCount->%d, left->%d, right->%d, parking->%d ",sRoot->distance, sRoot->carCount, sRoot->left, sRoot->right,sRoot->parking);
-
-    /*
-    //getting input from stdin
-    if(fgets(input, LEN, stdin) == NULL){
-        printf("\nerror in fgets - input");
-        return 1;
-    }
-    strtok(input, "\n"); //input string has an extra \n at the end
-     */
-
     while(!feof(stdin)) {
         scanf("%s",input);
         if (strcmp(input, ADDSTAT) == 0) {
             printf("ADDSTAT\n");
 
             scanf("%d", &distance);
-            addedStation = addStation(&sRoot,
-                                      distance); //addStation return a pointer to the newly added station if added, else return NULL
+            addedStation = addStation(&sRoot,distance); //addStation return a pointer to the newly added station if added, else return NULL
 
             if (addedStation != NULL) {
                 scanf("%d", &numOfCars);
@@ -101,7 +90,7 @@ int main(){
 
             scanf("%d", &distance);
             if (distance > 0) {
-                if (removeStation(sRoot, distance)) {
+                if (removeStation(&sRoot, distance)) {
                     printf("demolita");
                 } else {
                     printf("non demolita");
@@ -115,17 +104,9 @@ int main(){
             scanf("%d", &distance);
             scanf("%d", &carAutonomy);
 
-            station = checkStation(distance);
+            station = checkStation(sRoot, distance);
             if(station != NULL){
                 addCar((carBST_t **) &station->parking, carAutonomy);
-
-            } else {
-                printf("non aggiunta");
-            }
-
-
-
-            if (addCar(NULL, carAutonomy)) {
                 printf("aggiunta");
             } else {
                 printf("non aggiunta");
@@ -163,7 +144,18 @@ int main(){
 
 }
 
-statBST_t *checkStation(int distance) {
+statBST_t *checkStation(statBST_t * root, int dist) {
+    statBST_t * current = root;
+
+    while (current != NULL) {
+        if (dist == current->distance) {
+            return current;
+        } else if (dist < current->distance) {
+            current = current->left;
+        } else {
+            current = current->right;
+        }
+    }
     return NULL;
 }
 
@@ -205,11 +197,56 @@ statBST_t * addStation(statBST_t ** root, int dist){
 }
 
 
+int removeStation(statBST_t ** root, int distance) {
 
+    statBST_t * current = *root;
+    statBST_t * parent = NULL;
+    statBST_t * temp = NULL;
+    statBST_t * successor = NULL;
 
-int removeStation(statBST_t *pS, int distance) {
-    return 0;
+    // Find the station to be removed
+    while (current != NULL && current->distance != distance) {
+        parent = current;
+        if (distance < current->distance) {
+            current = current->left;
+        } else {
+            current = current->right;
+        }
+    }
+
+    if (current == NULL) {
+        return 0; // Key not found
+    }
+
+    if (current->left == NULL || current->right == NULL) {
+        temp = current->left;
+        if (temp == NULL) {
+            temp = current->right;
+        }
+        if(parent == NULL){
+            *root = temp;
+        } else if(parent->left == current){
+            parent->left = temp;
+        } else {
+            parent->right = temp;
+        }
+        free(current);
+        current = temp;
+    }
+    if (parent == NULL){
+        *root = NULL;
+    } else if (parent->left == current) {
+        parent->left = NULL;
+    } else {
+        parent->right = NULL;
+    }
+    free(current);
+
+    return 1; // Removal successful
 }
+
+
+
 int addCar(carBST_t ** root, int autonomy) {
 
     carBST_t *current = *root;
