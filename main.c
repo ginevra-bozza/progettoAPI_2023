@@ -28,7 +28,7 @@ int stringCmp(const char* , const char* );
 statBST_t *addStation(statBST_t **, int);
 int addCar(carBST_t **, int);
 int removeStation(statBST_t **, int);
-int removeCar(int, int);
+int removeCar(carBST_t **, int);
 void planRoute(int, int);
 statBST_t *checkStation(statBST_t *, int distance);
 
@@ -116,11 +116,19 @@ int main(){
             printf("REMOVECAR");
             scanf("%d", &distance);
             scanf("%d", &carAutonomy);
-            if (removeCar(distance, carAutonomy)) {
-                printf("demolita");
+
+            station = checkStation(sRoot,distance);
+            if(station != NULL){
+                if (removeCar(&station->parking, carAutonomy)) {
+                    printf("demolita");
+                } else {
+                    printf("non demolita");
+                }
             } else {
                 printf("non demolita");
             }
+
+
 
         } else if (strcmp(input, BESTROUTE) == 0) {
             printf("BESTROUTE");
@@ -202,10 +210,10 @@ int removeStation(statBST_t ** root, int distance) {
     statBST_t * current = *root;
     statBST_t * parent = NULL;
     statBST_t * temp = NULL;
-    statBST_t * successor = NULL;
+
 
     // Find the station to be removed
-    while (current != NULL && current->distance != distance) {
+    while (current->distance != distance) {
         parent = current;
         if (distance < current->distance) {
             current = current->left;
@@ -233,9 +241,8 @@ int removeStation(statBST_t ** root, int distance) {
         free(current);
         current = temp;
     }
-    if (parent == NULL){
-        *root = NULL;
-    } else if (parent->left == current) {
+
+    if (parent->left == current) {
         parent->left = NULL;
     } else {
         parent->right = NULL;
@@ -300,8 +307,56 @@ int addCar(carBST_t ** root, int autonomy) {
 
     return 1;
 }
-int removeCar(int distance, int autonomy) {
-    return 0;
+int removeCar(carBST_t ** root, int aut) {
+    carBST_t * current = *root;
+    carBST_t * parent = NULL;
+    carBST_t * temp = NULL;
+
+    // Find the car to be removed
+    while (current != NULL && current->autonomy != aut) {
+        parent = current;
+        if (aut < current->autonomy) {
+            current = current->left;
+        } else {
+            current = current->right;
+        }
+    }
+
+    if (current == NULL) {
+        return 0; // Key not found
+    }
+
+    if (current->left == NULL || current->right == NULL) {
+        temp = current->left;
+        if (temp == NULL) {
+            temp = current->right;
+        }
+        if(temp->carCounter>1){
+            temp->carCounter--;
+            return 1;
+        } else {
+            if(parent == NULL){
+                *root = temp;
+            } else if(parent->left == current){
+                parent->left = temp;
+            } else {
+                parent->right = temp;
+            }
+            free(current);
+            current = temp;
+        }
+
+    }
+    if (parent == NULL){
+        *root = NULL;
+    } else if (parent->left == current) {
+        parent->left = NULL;
+    } else {
+        parent->right = NULL;
+    }
+    free(current);
+
+    return 1; // Removal successful
 }
 void planRoute(int start, int anEnd) {
 
