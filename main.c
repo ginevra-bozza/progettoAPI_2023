@@ -31,6 +31,7 @@ int removeStation(statBST_t **, int);
 int removeCar(carBST_t **, int);
 void planRoute(int, int);
 statBST_t *checkStation(statBST_t *, int distance);
+statBST_t * findStation(statBST_t **, int dist, statBST_t **);
 
 statBST_t *min(struct statBST_s *pS);
 
@@ -167,6 +168,23 @@ statBST_t *checkStation(statBST_t * root, int dist) {
     return NULL;
 }
 
+/*statBST_t * findStation(statBST_t ** root, int dist, statBST_t ** parent) {
+    statBST_t * current = *root;
+
+    while (current != NULL) {
+        *parent = current; //saves the parent node of the station
+        if (dist == current->distance) {
+            return current; //return the station when found
+        } else if (dist < current->distance) {
+            current = current->left;
+        } else {
+            current = current->right;
+        }
+    }
+    return NULL; //return NULL if the station is not found
+}*/
+
+
 statBST_t * addStation(statBST_t ** root, int dist){
     statBST_t *current = *root;
     statBST_t *parent = NULL;
@@ -205,7 +223,63 @@ statBST_t * addStation(statBST_t ** root, int dist){
 }
 
 
-int removeStation(statBST_t ** root, int distance) {
+int removeStation (statBST_t ** root, int dist)
+{
+    statBST_t* current = *root;
+    statBST_t* parent = NULL;
+
+
+    while (current != NULL && current->distance != dist) {
+        parent = current;
+        if (dist < current->distance)
+            current = current->left;
+        else
+            current = current->right;
+    }
+    if (current == NULL) {
+        return 0; //the station is not present and cannot be deleted
+    }
+
+    //the station has 0 or only 1 child
+    if (current->left == NULL || current->right == NULL) {
+
+        statBST_t * tempSt;
+
+        if (current->left == NULL)
+            tempSt = current->right;
+        else
+            tempSt = current->left;
+
+        if (current == parent->left)
+            parent->left = tempSt;
+        else
+            parent->right = tempSt;
+
+        free(current);
+
+    } else { //the station node has 2 children
+        statBST_t * temp1 = NULL;
+        statBST_t * temp2 = NULL;
+
+        temp2 = current->right;
+        while (temp2->left != NULL) {
+            temp1 = temp2;
+            temp2 = temp2->left;
+        }
+
+        if (temp1 != NULL)
+            temp1->left = temp2->right;
+        else
+            current->right = temp2->right;
+
+        current->distance = temp2->distance;
+        free(temp2);
+    }
+    return 1; //station deleted successfully
+}
+
+
+/*int deleteStation(statBST_t ** root, int distance) {
 
     statBST_t * current = *root;
     statBST_t * parent = NULL;
@@ -223,7 +297,7 @@ int removeStation(statBST_t ** root, int distance) {
     }
 
     if (current == NULL) {
-        return 0; // Key not found
+        return 0; // station not found
     }
 
     if (current->left == NULL || current->right == NULL) {
@@ -231,9 +305,7 @@ int removeStation(statBST_t ** root, int distance) {
         if (temp == NULL) {
             temp = current->right;
         }
-        if(parent == NULL){
-            *root = temp;
-        } else if(parent->left == current){
+        if(parent->left == current){
             parent->left = temp;
         } else {
             parent->right = temp;
@@ -250,7 +322,9 @@ int removeStation(statBST_t ** root, int distance) {
     free(current);
 
     return 1; // Removal successful
-}
+}*/
+
+
 
 
 
@@ -310,53 +384,56 @@ int addCar(carBST_t ** root, int autonomy) {
 int removeCar(carBST_t ** root, int aut) {
     carBST_t * current = *root;
     carBST_t * parent = NULL;
-    carBST_t * temp = NULL;
 
-    // Find the car to be removed
+
     while (current != NULL && current->autonomy != aut) {
         parent = current;
-        if (aut < current->autonomy) {
+        if (aut < current->autonomy)
             current = current->left;
-        } else {
+        else
             current = current->right;
-        }
     }
-
     if (current == NULL) {
-        return 0; // Key not found
+        return 0; //the car is not present and cannot be deleted
     }
 
+    //the car has 0 or only 1 child
     if (current->left == NULL || current->right == NULL) {
-        temp = current->left;
-        if (temp == NULL) {
-            temp = current->right;
-        }
-        if(temp->carCounter>1){
-            temp->carCounter--;
-            return 1;
-        } else {
-            if(parent == NULL){
-                *root = temp;
-            } else if(parent->left == current){
-                parent->left = temp;
-            } else {
-                parent->right = temp;
-            }
-            free(current);
-            current = temp;
+
+        carBST_t * tempC;
+
+        if (current->left == NULL)
+            tempC = current->right;
+        else
+            tempC = current->left;
+
+        if (current == parent->left)
+            parent->left = tempC;
+        else
+            parent->right = tempC;
+
+        free(current);
+
+    } else { //the station node has 2 children
+        carBST_t * temp1 = NULL;
+        carBST_t * temp2 = NULL;
+
+        temp2 = current->right;
+        while (temp2->left != NULL) {
+            temp1 = temp2;
+            temp2 = temp2->left;
         }
 
-    }
-    if (parent == NULL){
-        *root = NULL;
-    } else if (parent->left == current) {
-        parent->left = NULL;
-    } else {
-        parent->right = NULL;
-    }
-    free(current);
+        if (temp1 != NULL)
+            temp1->left = temp2->right;
+        else
+            current->right = temp2->right;
 
-    return 1; // Removal successful
+        current->autonomy = temp2->autonomy;
+        free(temp2);
+    }
+    return 1; //car deleted successfully
+
 }
 void planRoute(int start, int anEnd) {
 
