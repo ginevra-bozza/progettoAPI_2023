@@ -19,8 +19,15 @@ typedef struct statBST_s{
     struct statBST_s *left, *right;
     int distance;
     int carCount;
+    int maxFuel;
     carBST_t *parking;
 } statBST_t;
+
+typedef struct stopList_s {
+    struct stopList_s * next;
+    int distance;
+    int maxFuel;
+} stopList_t;
 
 
 int stringCmp(const char* , const char* );
@@ -29,11 +36,15 @@ statBST_t *addStation(statBST_t **, int);
 int addCar(carBST_t **, int);
 int removeStation(statBST_t **, int);
 int removeCar(carBST_t **, int);
-void planRoute(int, int);
+void findBestPath(int start, int end);
 statBST_t *checkStation(statBST_t *, int distance);
 statBST_t * findStation(statBST_t **, int dist, statBST_t **);
 
 statBST_t *min(struct statBST_s *pS);
+
+void fromBSTtoList(statBST_t*,int ,int,stopList_t **);
+
+int findNewMaxFuel(carBST_t *cRoot);
 
 int main(){
     statBST_t *sRoot = NULL; //root of the BST containing all stations
@@ -58,6 +69,7 @@ int main(){
     sRoot->right = NULL;
     sRoot->parking = NULL;
 
+
     while(!feof(stdin)) {
         scanf("%s",input);
         if (strcmp(input, ADDSTAT) == 0) {
@@ -70,7 +82,7 @@ int main(){
                 scanf("%d", &numOfCars);
                 printf("Num of cars: %d", numOfCars);
                 addedStation->carCount = numOfCars;
-
+                addedStation->maxFuel = 0;
                 carParking = malloc(sizeof(carBST_t));
                 if (carParking == NULL) {
                     printf("Memory allocation error - new parking");
@@ -79,6 +91,8 @@ int main(){
                 for (int i = 1; i <= numOfCars; i++) {
                     scanf("%d", &carAutonomy);
                     addCar(&addedStation->parking, carAutonomy);
+                    if(carAutonomy > addedStation->maxFuel)
+                        addedStation->maxFuel = carAutonomy;
                 }
                 printf("aggiunta");
             } else {
@@ -108,6 +122,8 @@ int main(){
             station = checkStation(sRoot, distance);
             if(station != NULL){
                 addCar((carBST_t **) &station->parking, carAutonomy);
+                if(carAutonomy > station->maxFuel)
+                    station->maxFuel = carAutonomy;
                 printf("aggiunta");
             } else {
                 printf("non aggiunta");
@@ -121,6 +137,9 @@ int main(){
             station = checkStation(sRoot,distance);
             if(station != NULL){
                 if (removeCar(&station->parking, carAutonomy)) {
+                    if(station->maxFuel == carAutonomy){
+                        station->maxFuel = findNewMaxFuel(station->parking);
+                    }
                     printf("demolita");
                 } else {
                     printf("non demolita");
@@ -129,29 +148,49 @@ int main(){
                 printf("non demolita");
             }
 
-
-
         } else if (strcmp(input, BESTROUTE) == 0) {
             printf("BESTROUTE");
-            int start;
-            int end;
+            int start,end;
+            statBST_t * startStat = NULL;
+            statBST_t *endStat = NULL;
+            stopList_t * listHead = NULL;
             scanf("%d", &start);
             scanf("%d", &end);
-            planRoute(start, end);
+
+            startStat = checkStation(sRoot, start);
+            if(startStat == NULL){
+                printf(("nessun percorso"));
+            }
+            endStat = checkStation(sRoot, end);
+            if(endStat == NULL){
+                printf(("nessun percorso"));
+            }
+            fromBSTtoList(sRoot, start,end,&listHead);
+
+            stopList_t * temp = listHead;
+            printf("\n");
+
+            while(temp != NULL){
+                printf("%d ",temp->distance);
+                temp = temp->next;
+            }
+
+            findBestPath(start, end);
 
         } else {
             printf("aaaaaaa");
         }
     }
 
-    /*if(fgets(input, LEN, stdin) == NULL){
-        printf("\nerror in fgets - input");
-        return 1;
-    }*/
-    //}
-
-
 }
+
+int findNewMaxFuel(carBST_t * car) {
+    while (car->right != NULL) {
+        car = car->right;
+    }
+    return car->autonomy;
+}
+
 
 statBST_t *checkStation(statBST_t * root, int dist) {
     statBST_t * current = root;
@@ -168,21 +207,6 @@ statBST_t *checkStation(statBST_t * root, int dist) {
     return NULL;
 }
 
-/*statBST_t * findStation(statBST_t ** root, int dist, statBST_t ** parent) {
-    statBST_t * current = *root;
-
-    while (current != NULL) {
-        *parent = current; //saves the parent node of the station
-        if (dist == current->distance) {
-            return current; //return the station when found
-        } else if (dist < current->distance) {
-            current = current->left;
-        } else {
-            current = current->right;
-        }
-    }
-    return NULL; //return NULL if the station is not found
-}*/
 
 
 statBST_t * addStation(statBST_t ** root, int dist){
@@ -279,54 +303,6 @@ int removeStation (statBST_t ** root, int dist)
 }
 
 
-/*int deleteStation(statBST_t ** root, int distance) {
-
-    statBST_t * current = *root;
-    statBST_t * parent = NULL;
-    statBST_t * temp = NULL;
-
-
-    // Find the station to be removed
-    while (current->distance != distance) {
-        parent = current;
-        if (distance < current->distance) {
-            current = current->left;
-        } else {
-            current = current->right;
-        }
-    }
-
-    if (current == NULL) {
-        return 0; // station not found
-    }
-
-    if (current->left == NULL || current->right == NULL) {
-        temp = current->left;
-        if (temp == NULL) {
-            temp = current->right;
-        }
-        if(parent->left == current){
-            parent->left = temp;
-        } else {
-            parent->right = temp;
-        }
-        free(current);
-        current = temp;
-    }
-
-    if (parent->left == current) {
-        parent->left = NULL;
-    } else {
-        parent->right = NULL;
-    }
-    free(current);
-
-    return 1; // Removal successful
-}*/
-
-
-
-
 
 int addCar(carBST_t ** root, int autonomy) {
 
@@ -396,6 +372,11 @@ int removeCar(carBST_t ** root, int aut) {
     if (current == NULL) {
         return 0; //the car is not present and cannot be deleted
     }
+    //if there are more cars with the same autonomy
+    if(current->carCounter>1){
+        current->carCounter--;
+        return 1;
+    }
 
     //the car has 0 or only 1 child
     if (current->left == NULL || current->right == NULL) {
@@ -435,7 +416,38 @@ int removeCar(carBST_t ** root, int aut) {
     return 1; //car deleted successfully
 
 }
-void planRoute(int start, int anEnd) {
+
+void fromBSTtoList(statBST_t* root, int start, int end, stopList_t ** sListHead){
+
+    if(root == NULL)
+        return;
+
+    fromBSTtoList(root->left,start,end,sListHead);
+    if(root->distance >= start && root->distance <= end){
+        stopList_t * newStop = (stopList_t *)(malloc(sizeof (stopList_t)));
+        newStop->distance = root->distance;
+        newStop->maxFuel = root->maxFuel;
+        if(*sListHead == NULL){
+            *sListHead = newStop;
+        } else {
+            stopList_t * tempStop = *sListHead;
+            while (tempStop->next != NULL){
+                tempStop = tempStop->next;
+            }
+            tempStop->next = newStop;
+        }
+    }
+    fromBSTtoList(root->right,start,end,sListHead);
+}
+
+
+
+
+void findBestPath(int start, int end) {
+
+
+
+
 
 }
 
