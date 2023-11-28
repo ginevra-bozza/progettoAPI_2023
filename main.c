@@ -23,12 +23,16 @@ typedef struct statBST_s{
     carBST_t *parking;
 } statBST_t;
 
-typedef struct stopList_s {
-    struct stopList_s * next;
+typedef struct stationList_s {
+    struct stationList_s * next;
     int distance;
     int maxFuel;
-} stopList_t;
+} stationList_t;
 
+typedef struct pathList_s{
+    struct pathList_s * next;
+    stationList_t * station;
+} pathList_t;
 
 int stringCmp(const char* , const char* );
 
@@ -36,15 +40,17 @@ statBST_t *addStation(statBST_t **, int);
 int addCar(carBST_t **, int);
 int removeStation(statBST_t **, int);
 int removeCar(carBST_t **, int);
-void findBestPath(int start, int end);
+pathList_t *findBestPath(stationList_t *firstStation, int stationCount);
 statBST_t *checkStation(statBST_t *, int distance);
 statBST_t * findStation(statBST_t **, int dist, statBST_t **);
 
 statBST_t *min(struct statBST_s *pS);
 
-void fromBSTtoList(statBST_t*,int ,int,stopList_t **);
+void fromBSTtoList(statBST_t *, int, int, stationList_t **, int *stationCount);
 
-int findNewMaxFuel(carBST_t *cRoot);
+int findNewMaxFuel(carBST_t *);
+
+pathList_t *insertStation(pathList_t *h, stationList_t *station);
 
 int main(){
     statBST_t *sRoot = NULL; //root of the BST containing all stations
@@ -153,7 +159,8 @@ int main(){
             int start,end;
             statBST_t * startStat = NULL;
             statBST_t *endStat = NULL;
-            stopList_t * listHead = NULL;
+            stationList_t * listHead = NULL;
+            int stationCounter = 0;
             scanf("%d", &start);
             scanf("%d", &end);
 
@@ -165,17 +172,17 @@ int main(){
             if(endStat == NULL){
                 printf(("nessun percorso"));
             }
-            fromBSTtoList(sRoot, start,end,&listHead);
+            fromBSTtoList(sRoot, start, end, &listHead, &stationCounter);
 
-            stopList_t * temp = listHead;
+            pathList_t * bestPath = findBestPath(listHead, stationCounter);
+
+            pathList_t * temp = bestPath;
             printf("\n");
 
             while(temp != NULL){
-                printf("%d ",temp->distance);
+                printf("%d ",temp->station->distance);
                 temp = temp->next;
             }
-
-            findBestPath(start, end);
 
         } else {
             printf("aaaaaaa");
@@ -417,40 +424,101 @@ int removeCar(carBST_t ** root, int aut) {
 
 }
 
-void fromBSTtoList(statBST_t* root, int start, int end, stopList_t ** sListHead){
+void fromBSTtoList(statBST_t *root, int start, int end, stationList_t **sListHead, int *stationCount) {
 
     if(root == NULL)
         return;
 
-    fromBSTtoList(root->left,start,end,sListHead);
+    fromBSTtoList(root->left, start, end, sListHead, stationCount);
     if(root->distance >= start && root->distance <= end){
-        stopList_t * newStop = (stopList_t *)(malloc(sizeof (stopList_t)));
+        stationList_t * newStop = (stationList_t *)(malloc(sizeof (stationList_t)));
         newStop->distance = root->distance;
         newStop->maxFuel = root->maxFuel;
+        *stationCount = (*stationCount) + 1;
         if(*sListHead == NULL){
             *sListHead = newStop;
         } else {
-            stopList_t * tempStop = *sListHead;
+            stationList_t * tempStop = *sListHead;
             while (tempStop->next != NULL){
                 tempStop = tempStop->next;
             }
             tempStop->next = newStop;
         }
     }
-    fromBSTtoList(root->right,start,end,sListHead);
+    fromBSTtoList(root->right, start, end, sListHead, stationCount);
 }
 
 
 
 
-void findBestPath(int start, int end) {
+pathList_t *findBestPath(stationList_t *firstStation, int stationCount) {
 
+    pathList_t* temp = NULL;
+    pathList_t* bestPath = NULL;
+    pathList_t* curr = NULL;
 
+    int minStopsCount = stationCount;
 
+    temp = (pathList_t*) malloc(sizeof (pathList_t));
+    if(temp == NULL){
+        printf("Memory allocation error - path");
+        return NULL;
+    }
+    temp->next = NULL;
+    temp->station = firstStation;
 
+    while(temp != NULL){
+        curr  = temp;
+        temp = temp->next;
 
+        if(curr->station->distance == 0 && minStopsCount > 0) {
+            minStopsCount = 0;
+            bestPath = curr;
+        }
+
+        for(stationList_t *nextStat = firstStation; nextStat != NULL; nextStat = nextStat->next) {
+            int reachableDist = curr->station->distance + curr->station->maxFuel;
+            if(nextStat->distance <= reachableDist){
+                int stopsCount = 1;
+                int check = 0;
+                for(pathList_t * s = curr; s != NULL && check == 0; s = s->next){
+                    stopsCount++;
+                    if(s->station->distance + s->station->maxFuel >= nextStat->distance){
+                        check = 1;
+                    }
+                }
+                bestPath = insertStation(bestPath, nextStat);
+
+                temp = insertStation(temp, nextStat);
+            }
+        }
+    }
+    return bestPath;
 }
 
+pathList_t *insertStation(pathList_t *h, stationList_t *station) {
+    pathList_t * p = NULL;
+    p = (pathList_t*)malloc(sizeof (pathList_t));
+    if(p == NULL){
+        printf("Mem error - path station");
+        return NULL;
+    }
+    p->station = station;
+    p->next = NULL;
+
+    if (p != NULL) {
+        if (h == NULL) {
+            return p;
+        } else {
+            pathList_t *temp = h;
+            while (temp->next != NULL) {
+                temp = temp->next;
+            }
+            temp->next = p;
+        }
+    }
+    return h;
+}
 
 
 int stringCmp(const char* str1, const char* str2){
