@@ -44,6 +44,8 @@ pathList_t *findBestPath(stationList_t *firstStation, int stationCount);
 statBST_t *checkStation(statBST_t *, int distance);
 statBST_t * findStation(statBST_t **, int dist, statBST_t **);
 
+void printBSTInOrder(statBST_t *);
+
 statBST_t *min(struct statBST_s *pS);
 
 void fromBSTtoList(statBST_t *, int, int, stationList_t **, int *stationCount);
@@ -165,23 +167,26 @@ int main(){
             scanf("%d", &end);
 
             startStat = checkStation(sRoot, start);
-            if(startStat == NULL){
-                printf(("nessun percorso"));
-            }
             endStat = checkStation(sRoot, end);
-            if(endStat == NULL){
+
+            if(startStat == NULL || endStat == NULL){
                 printf(("nessun percorso"));
             }
-            fromBSTtoList(sRoot, start, end, &listHead, &stationCounter);
+            else{
+                printBSTInOrder(sRoot);
+                /*
+                fromBSTtoList(sRoot, start, end, &listHead, &stationCounter);
 
-            pathList_t * bestPath = findBestPath(listHead, stationCounter);
+                pathList_t * bestPath = findBestPath(listHead, stationCounter);
 
-            pathList_t * temp = bestPath;
-            printf("\n");
+                pathList_t * temp = bestPath;
+                printf("\n");
 
-            while(temp != NULL){
-                printf("%d ",temp->station->distance);
-                temp = temp->next;
+                while(temp != NULL){
+                    printf("%d ",temp->station->distance);
+                    temp = temp->next;
+                }
+                printf("ciao");*/
             }
 
         } else {
@@ -430,15 +435,17 @@ void fromBSTtoList(statBST_t *root, int start, int end, stationList_t **sListHea
         return;
 
     fromBSTtoList(root->left, start, end, sListHead, stationCount);
+
     if(root->distance >= start && root->distance <= end){
         stationList_t * newStop = (stationList_t *)(malloc(sizeof (stationList_t)));
         newStop->distance = root->distance;
         newStop->maxFuel = root->maxFuel;
+        newStop->next = NULL;
         *stationCount = (*stationCount) + 1;
         if(*sListHead == NULL){
             *sListHead = newStop;
         } else {
-            stationList_t * tempStop = *sListHead;
+            stationList_t * tempStop = (*sListHead);
             while (tempStop->next != NULL){
                 tempStop = tempStop->next;
             }
@@ -468,6 +475,7 @@ pathList_t *findBestPath(stationList_t *firstStation, int stationCount) {
     temp->station = firstStation;
 
     while(temp != NULL){
+        printf("chipichipi");
         curr  = temp;
         temp = temp->next;
 
@@ -477,6 +485,7 @@ pathList_t *findBestPath(stationList_t *firstStation, int stationCount) {
         }
 
         for(stationList_t *nextStat = firstStation; nextStat != NULL; nextStat = nextStat->next) {
+            printf("chapachapa");
             int reachableDist = curr->station->distance + curr->station->maxFuel;
             if(nextStat->distance <= reachableDist){
                 int stopsCount = 1;
@@ -530,4 +539,30 @@ int stringCmp(const char* str1, const char* str2){
     }
     res = *(const char*)str1-*(const char*)str2;
     return res;
+}
+
+
+void printBSTInOrder(statBST_t * root){
+    statBST_t * curr, *prev;
+
+    curr = root;
+    while(curr != NULL){
+        if(curr->left == NULL){
+            printf("stampa inizio %d ", curr->distance);
+            curr = curr->right;
+        } else {
+            prev = curr->left;
+            while(prev->right != NULL && prev->right != curr){
+                prev = prev->right;
+            }
+            if(prev->right == NULL){
+                prev->right = curr;
+                curr = curr->right;
+            } else {
+                prev->right = NULL;
+                printf("stampa fine %d ", curr->distance);
+                curr = curr->left;
+            }
+        }
+    }
 }
