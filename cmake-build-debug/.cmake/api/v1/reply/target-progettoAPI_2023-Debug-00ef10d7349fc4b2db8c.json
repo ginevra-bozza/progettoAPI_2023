@@ -2,7 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "progettoAPI_2023"
+			"path" : "progettoAPI_2023.exe"
+		},
+		{
+			"path" : "progettoAPI_2023.pdb"
 		}
 	],
 	"backtrace" : 1,
@@ -35,7 +38,10 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-g -std=gnu11 -fdiagnostics-color=always"
+					"fragment" : "-g"
+				},
+				{
+					"fragment" : "-std=gnu11"
 				}
 			],
 			"language" : "C",
@@ -65,12 +71,16 @@
 			{
 				"fragment" : "",
 				"role" : "flags"
+			},
+			{
+				"fragment" : "-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32",
+				"role" : "libraries"
 			}
 		],
 		"language" : "C"
 	},
 	"name" : "progettoAPI_2023",
-	"nameOnDisk" : "progettoAPI_2023",
+	"nameOnDisk" : "progettoAPI_2023.exe",
 	"paths" : 
 	{
 		"build" : ".",

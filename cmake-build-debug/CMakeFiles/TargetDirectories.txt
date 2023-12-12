@@ -1,3 +1,3 @@
-/home/ginny/Documenti/GitHub/progettoAPI_2023/cmake-build-debug/CMakeFiles/progettoAPI_2023.dir
-/home/ginny/Documenti/GitHub/progettoAPI_2023/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/ginny/Documenti/GitHub/progettoAPI_2023/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+D:/Users/Ginny/Documents/GitHub/progettoAPI_2023/cmake-build-debug/CMakeFiles/progettoAPI_2023.dir
+D:/Users/Ginny/Documents/GitHub/progettoAPI_2023/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/Users/Ginny/Documents/GitHub/progettoAPI_2023/cmake-build-debug/CMakeFiles/rebuild_cache.dir

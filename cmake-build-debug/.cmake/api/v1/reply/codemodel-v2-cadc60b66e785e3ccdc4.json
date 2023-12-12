@@ -6,10 +6,10 @@
 			[
 				{
 					"build" : ".",
-					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
 					"minimumCMakeVersion" : 
 					{
-						"string" : "3.26"
+						"string" : "3.23"
 					},
 					"projectIndex" : 0,
 					"source" : ".",
@@ -39,7 +39,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "progettoAPI_2023::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-progettoAPI_2023-Debug-3ec37f233ed96dd19b5a.json",
+					"jsonFile" : "target-progettoAPI_2023-Debug-00ef10d7349fc4b2db8c.json",
 					"name" : "progettoAPI_2023",
 					"projectIndex" : 0
 				}
@@ -49,12 +49,12 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/home/ginny/Documenti/GitHub/progettoAPI_2023/cmake-build-debug",
-		"source" : "/home/ginny/Documenti/GitHub/progettoAPI_2023"
+		"build" : "D:/Users/Ginny/Documents/GitHub/progettoAPI_2023/cmake-build-debug",
+		"source" : "D:/Users/Ginny/Documents/GitHub/progettoAPI_2023"
 	},
 	"version" : 
 	{
 		"major" : 2,
-		"minor" : 5
+		"minor" : 4
 	}
 }

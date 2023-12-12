@@ -1,0 +1,3 @@
+"D:\Program Files\JetBrains\CLion 2022.2\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\progettoAPI_2023.dir/objects.a
+"D:\Program Files\JetBrains\CLion 2022.2\bin\mingw\bin\ar.exe" qc CMakeFiles\progettoAPI_2023.dir/objects.a @CMakeFiles\progettoAPI_2023.dir\objects1.rsp
+"D:\Program Files\JetBrains\CLion 2022.2\bin\mingw\bin\gcc.exe" -g -Wl,--whole-archive CMakeFiles\progettoAPI_2023.dir/objects.a -Wl,--no-whole-archive -o progettoAPI_2023.exe -Wl,--out-implib,libprogettoAPI_2023.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\progettoAPI_2023.dir\linklibs.rsp
