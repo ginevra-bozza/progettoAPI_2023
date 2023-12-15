@@ -45,6 +45,7 @@ statBST_t *checkStation(statBST_t *, int distance);
 statBST_t * findStation(statBST_t **, int dist, statBST_t **);
 
 void printBSTInOrder(statBST_t *);
+void printInorder(statBST_t *);
 
 statBST_t *min(struct statBST_s *pS);
 
@@ -173,20 +174,26 @@ int main(){
                 printf(("nessun percorso"));
             }
             else{
-                printBSTInOrder(sRoot);
-                /*
+                //printBSTInOrder(sRoot);
+                //printInorder(sRoot);
+
                 fromBSTtoList(sRoot, start, end, &listHead, &stationCounter);
-
-                pathList_t * bestPath = findBestPath(listHead, stationCounter);
-
-                pathList_t * temp = bestPath;
-                printf("\n");
-
+                stationList_t * temp = listHead;
                 while(temp != NULL){
-                    printf("%d ",temp->station->distance);
+                    printf(" %d ", temp->distance);
                     temp = temp->next;
                 }
-                printf("ciao");*/
+                /*
+               pathList_t * bestPath = findBestPath(listHead, stationCounter);
+
+               pathList_t * temp = bestPath;
+               printf("\n");
+
+               while(temp != NULL){
+                   printf("%d ",temp->station->distance);
+                   temp = temp->next;
+               }
+               printf("ciao");*/
             }
 
         } else {
@@ -562,6 +569,54 @@ void printBSTInOrder(statBST_t * root){
                 prev->right = NULL;
                 printf("stampa fine %d ", curr->distance);
                 curr = curr->left;
+            }
+        }
+    }
+}
+
+/*void printInorder(statBST_t * node) //recursive
+{
+    if (node == NULL)
+        return;
+
+    // First recur on left child
+    printInorder(node->left);
+
+    // Then print the data of node
+    printf("%d ", node->distance);
+
+    // Now recur on right child
+    printInorder(node->right);
+}*/
+
+void printInorder(statBST_t *root) {
+    statBST_t *current = root;
+    statBST_t *predecessor = NULL;
+
+    while (current != NULL) {
+        if (current->left == NULL) {
+            // If the left subtree is null, print the current node and move to the right subtree
+            printf("%d ", current->distance);
+
+
+
+            current = current->right;
+        } else {
+            // Find the predecessor in the left subtree
+            predecessor = current->left;
+            while (predecessor->right != NULL && predecessor->right != current) {
+                predecessor = predecessor->right;
+            }
+
+            if (predecessor->right == NULL) {
+                // If the predecessor's right is null, establish a temporary link from the predecessor to the current node
+                predecessor->right = current;
+                current = current->left;
+            } else {
+                // If the predecessor's right is the current node, revert the temporary link and print the current node
+                predecessor->right = NULL;
+                printf("%d ", current->distance);
+                current = current->right;
             }
         }
     }
