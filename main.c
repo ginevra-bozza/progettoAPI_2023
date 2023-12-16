@@ -31,7 +31,7 @@ typedef struct stationList_s {
 
 typedef struct pathList_s{
     struct pathList_s * next;
-    stationList_t * station;
+    int statDist;
 } pathList_t;
 
 int stringCmp(const char* , const char* );
@@ -40,7 +40,7 @@ statBST_t *addStation(statBST_t **, int);
 int addCar(carBST_t **, int);
 int removeStation(statBST_t **, int);
 int removeCar(carBST_t **, int);
-pathList_t *findBestPath(stationList_t *firstStation, int stationCount);
+pathList_t *findBestPath(statBST_t *, statBST_t* );
 statBST_t *checkStation(statBST_t *, int distance);
 statBST_t * findStation(statBST_t **, int dist, statBST_t **);
 
@@ -54,6 +54,10 @@ void fromBSTtoList(statBST_t *, int, int, stationList_t **, int *stationCount);
 int findNewMaxFuel(carBST_t *);
 
 pathList_t *insertStation(pathList_t *h, stationList_t *station);
+
+pathList_t *createNewPath(statBST_t *startStation);
+
+pathList_t *add(pathList_t *pS, statBST_t *pS1);
 
 int main(){
     statBST_t *sRoot = NULL; //root of the BST containing all stations
@@ -177,15 +181,18 @@ int main(){
                 //printBSTInOrder(sRoot);
                 //printInorder(sRoot);
 
-                fromBSTtoList(sRoot, start, end, &listHead, &stationCounter);
+                /*fromBSTtoList(sRoot, start, end, &listHead, &stationCounter);
                 stationList_t * temp = listHead;
                 while(temp != NULL){
                     printf(" %d ", temp->distance);
                     temp = temp->next;
+                }*/
+                pathList_t * bestPath = findBestPath(startStat, endStat);
+                for(pathList_t * s = bestPath; s != NULL; s = s->next){
+                    printf(" %d ", s->statDist);
                 }
                 /*
                pathList_t * bestPath = findBestPath(listHead, stationCounter);
-
                pathList_t * temp = bestPath;
                printf("\n");
 
@@ -465,7 +472,7 @@ void fromBSTtoList(statBST_t *root, int start, int end, stationList_t **sListHea
 
 
 
-pathList_t *findBestPath(stationList_t *firstStation, int stationCount) {
+/*pathList_t *findBestPath(stationList_t *firstStation, int stationCount) {
 
     pathList_t* temp = NULL;
     pathList_t* bestPath = NULL;
@@ -482,7 +489,6 @@ pathList_t *findBestPath(stationList_t *firstStation, int stationCount) {
     temp->station = firstStation;
 
     while(temp != NULL){
-        printf("chipichipi");
         curr  = temp;
         temp = temp->next;
 
@@ -492,7 +498,6 @@ pathList_t *findBestPath(stationList_t *firstStation, int stationCount) {
         }
 
         for(stationList_t *nextStat = firstStation; nextStat != NULL; nextStat = nextStat->next) {
-            printf("chapachapa");
             int reachableDist = curr->station->distance + curr->station->maxFuel;
             if(nextStat->distance <= reachableDist){
                 int stopsCount = 1;
@@ -534,7 +539,7 @@ pathList_t *insertStation(pathList_t *h, stationList_t *station) {
         }
     }
     return h;
-}
+}*/
 
 
 int stringCmp(const char* str1, const char* str2){
@@ -597,9 +602,6 @@ void printInorder(statBST_t *root) {
         if (current->left == NULL) {
             // If the left subtree is null, print the current node and move to the right subtree
             printf("%d ", current->distance);
-
-
-
             current = current->right;
         } else {
             // Find the predecessor in the left subtree
@@ -615,9 +617,121 @@ void printInorder(statBST_t *root) {
             } else {
                 // If the predecessor's right is the current node, revert the temporary link and print the current node
                 predecessor->right = NULL;
-                printf("%d ", current->distance);
-                current = current->right;
+            printf("%d ", current->distance);
+            current = current->right;
             }
         }
     }
+}
+
+pathList_t * findBestPath(statBST_t * start, statBST_t * end) {
+    statBST_t *current = start;
+    statBST_t *predecessor = NULL;
+    pathList_t * bestPath = NULL;
+    statBST_t * nextBestStation = NULL;
+    statBST_t * temp = NULL;
+    int shortestDistToEnd = end->distance - start->distance;
+    int found = 0;
+
+    if(start->maxFuel = 0)
+        return NULL; //can't reach next station;
+
+    bestPath = createNewPath(start);
+
+    if(start->maxFuel >= shortestDistToEnd){
+        bestPath = add(bestPath, end);
+        return bestPath; //can reach end station directly
+    }
+
+    current = start;
+    temp = start;
+
+    while(current != end && found == 0){
+        shortestDistToEnd = end->distance - current->distance;
+        while(temp->distance <= current->distance + current->maxFuel){
+
+            if (temp->left == NULL) {
+                //see if the station is the new best
+                int distToEvaluate = end->distance - (temp->distance + temp->maxFuel);
+                if( distToEvaluate < shortestDistToEnd){
+                    nextBestStation = temp;
+                    shortestDistToEnd = distToEvaluate;
+                } else if(distToEvaluate == shortestDistToEnd){
+                    if(temp->distance < nextBestStation->distance){
+                        nextBestStation = temp;
+                    }
+                }
+                //if the successive station is reachable from the current one, proceed
+                if(temp->maxFuel >= (temp->right->distance - temp->distance)){
+                    temp = temp->right;
+                } else
+                    return NULL;
+
+            } else {
+                // find the predecessor in the left subtree
+                predecessor = temp->left;
+                while (predecessor->right != NULL && predecessor->right != temp) {
+                    predecessor = predecessor->right;
+                }
+
+                if (predecessor->right == NULL) {
+                    // if the predecessor's right is null, establish a temporary link from the predecessor to the current node
+                    predecessor->right = temp;
+                    temp = temp->left;
+                } else {
+                    // if the predecessor's right is the current node, revert the temporary link and print the current node
+                    predecessor->right = NULL;
+
+                    //see if the station is the new best
+                    int distToEvaluate = end->distance - (temp->distance + temp->maxFuel);
+                    if( distToEvaluate < shortestDistToEnd){
+                        nextBestStation = temp;
+                        shortestDistToEnd = distToEvaluate;
+                    } else if(distToEvaluate == shortestDistToEnd){
+                        if(temp->distance < nextBestStation->distance){
+                            nextBestStation = temp;
+                        }
+                    }
+                    //if the next station is reachable from the current one, proceed
+                    if(temp->maxFuel >= (temp->right->distance - temp->distance)){
+                        temp = temp->right;
+                    } else
+                        return NULL;
+
+                    temp = temp->right;
+                }
+            }
+            //bestPath is a pointer to the head of the path list
+            bestPath = add(bestPath, nextBestStation);
+            if(end->distance - nextBestStation->distance <= nextBestStation->maxFuel){
+                bestPath = add(bestPath,end);
+                found = 1;
+            } else {
+                current = nextBestStation;
+            }
+        }
+
+    }
+
+}
+
+pathList_t *add(pathList_t * headStation, statBST_t * station) {
+
+    pathList_t * newNode = (pathList_t*) malloc(sizeof (pathList_t));
+    newNode->next = NULL;
+    newNode->statDist = station->distance;
+
+    pathList_t * temp = headStation;
+    while(temp->next!=NULL)
+        temp = temp->next;
+    temp->next = newNode;
+
+    return headStation;
+}
+
+pathList_t *createNewPath(statBST_t *startStation) {
+    pathList_t * path = (pathList_t*) malloc(sizeof (pathList_t));
+    path->next = NULL;
+    path->statDist = startStation->distance;
+    return path;
 }
