@@ -17,6 +17,7 @@ typedef struct carBST_s{
 
 typedef struct statBST_s{
     struct statBST_s *left, *right;
+    struct statBST_s * parent;
     int distance;
     int carCount;
     int maxFuel;
@@ -174,8 +175,12 @@ int main(){
             }
             else{
                 pathList_t * bestPath = findBestPath(sRoot,startStat, endStat);
-                for(pathList_t * s = bestPath; s != NULL; s = s->next){
-                    printf(" %d ", s->statDist);
+                if(bestPath == NULL){
+                    printf("nessun percorso");
+                } else {
+                    for(pathList_t * s = bestPath; s != NULL; s = s->next){
+                        printf(" %d ", s->statDist);
+                    }
                 }
             }
 
@@ -238,6 +243,7 @@ statBST_t * addStation(statBST_t ** root, int dist){
     station->right = NULL;
     station->left = NULL;
     station->parking = NULL;
+    station->parent = parent;
 
     //insert the station in the tree
     if(dist < parent->distance)
@@ -248,7 +254,7 @@ statBST_t * addStation(statBST_t ** root, int dist){
 
 }
 
-
+//DA AGGIUNGERE: modifica del nodo parent
 int removeStation (statBST_t ** root, int dist)
 {
     statBST_t* current = *root;
@@ -447,7 +453,12 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end) {
         shortestDistToEnd = end->distance - current->distance;
         while(temp->distance <= current->distance + current->maxFuel){
 
+            //if from the temp station the next station is not reachable, the path doesn't exist
             if (temp->left == NULL) {
+                if(temp->maxFuel <= 0 || temp->distance + temp->maxFuel < temp->right->distance){
+                    return NULL;
+                }
+
                 //see if the station is the new best
                 int distToEvaluate = end->distance - (temp->distance + temp->maxFuel);
                 if( distToEvaluate < shortestDistToEnd){
@@ -511,6 +522,58 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end) {
     }
     return bestPath;
 
+}
+
+
+pathList_t * findBestPath1(statBST_t * root,statBST_t * start, statBST_t * end){
+
+    statBST_t *current = start;
+    statBST_t *predecessor = NULL;
+    pathList_t * bestPath = NULL;
+    statBST_t * nextBestStation = NULL;
+    statBST_t * temp = NULL;
+    statBST_t * currentNext = NULL;
+    statBST_t * tempNext = NULL;
+    int shortestDistToEnd = end->distance - start->distance;
+    int found = 0;
+
+    if(start->maxFuel == 0)
+        return NULL; //can't reach next station;
+
+    bestPath = createNewPath(start->distance);
+
+    if(start->maxFuel >= shortestDistToEnd){
+        bestPath = add(bestPath, end);
+        return bestPath; //can reach end station directly
+    }
+
+    //find the first next station
+    temp = successor(root, start);
+    nextBestStation = temp;
+    while(current != NULL && current != end){
+        shortestDistToEnd = end->distance - current->distance;
+
+        while(temp != end){
+            tempNext = successor(root, temp);
+            if(temp->maxFuel != 0 && temp->maxFuel + temp->distance >= tempNext->distance) {
+                if((end->distance - (temp->distance + temp->maxFuel)) < shortestDistToEnd){
+                    nextBestStation = temp;
+                    temp = tempNext;
+                }
+            }
+
+        }
+        //bestPath is a pointer to the head of the path list
+        bestPath = add(bestPath, nextBestStation);
+        if(nextBestStation->distance == end->distance){
+            return bestPath;
+        }
+        if(end->distance - nextBestStation->distance <= nextBestStation->maxFuel){
+            bestPath = add(bestPath,end);
+            return bestPath;
+        }
+        current = nextBestStation;
+    }
 }
 
 pathList_t *add(pathList_t * headStation, statBST_t * station) {
