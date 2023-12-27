@@ -42,6 +42,7 @@ int addCar(carBST_t **, int);
 int removeStation(statBST_t **, int);
 int removeCar(carBST_t **, int);
 pathList_t *findBestPath(statBST_t *,statBST_t *, statBST_t* );
+pathList_t *findBestPathReversed(statBST_t *,statBST_t *, statBST_t* );
 statBST_t *checkStation(statBST_t *, int distance);
 statBST_t* min(statBST_t*);
 statBST_t* successor(statBST_t*, statBST_t*);
@@ -54,6 +55,8 @@ int findNewMaxFuel(carBST_t *);
 
 pathList_t *createNewPath(int startDistance);
 pathList_t *add(pathList_t *pS, statBST_t *pS1);
+
+statBST_t *predecessor(statBST_t *, statBST_t *);
 
 int main(){
     statBST_t *sRoot = NULL; //root of the BST containing all stations
@@ -174,14 +177,28 @@ int main(){
                 printf(("nessun percorso"));
             }
             else{
-                pathList_t * bestPath = findBestPath(sRoot,startStat, endStat);
+                pathList_t * bestPath = NULL;
+                if(start < end){
+                    bestPath = findBestPath(sRoot,startStat, endStat);
+                } else if(start > end){
+                    bestPath = findBestPathReversed(sRoot,startStat, endStat);
+                } else if(start == end){
+                    bestPath = createNewPath(start);
+                }
+
                 if(bestPath == NULL){
                     printf("nessun percorso");
                 } else {
-                    for(pathList_t * s = bestPath; s != NULL; s = s->next){
+                    pathList_t * s = bestPath;
+                    pathList_t * temp = NULL;
+                    while(s != NULL){
                         printf(" %d ", s->statDist);
+                        temp = s->next;
+                        free(s);
+                        s = temp;
                     }
                 }
+
             }
 
         } else {
@@ -425,109 +442,10 @@ int removeCar(carBST_t ** root, int aut) {
 
 }
 
-pathList_t * findBestPath1(statBST_t * root,statBST_t * start, statBST_t * end) {
-    statBST_t *current = start;
-    statBST_t *predecessor = NULL;
-    pathList_t * bestPath = NULL;
-    statBST_t * nextBestStation = NULL;
-    statBST_t * temp = NULL;
-    int shortestDistToEnd = end->distance - start->distance;
-    int found = 0;
-
-    if(start->maxFuel == 0)
-        return NULL; //can't reach next station;
-
-    bestPath = createNewPath(start->distance);
-
-    if(start->maxFuel >= shortestDistToEnd){
-        bestPath = add(bestPath, end);
-        return bestPath; //can reach end station directly
-    }
-
-
-    //find the first next station
-    temp = successor(root, start);
-    nextBestStation = temp;
-
-    while(current != end && found == 0){
-        shortestDistToEnd = end->distance - current->distance;
-        while(temp->distance <= current->distance + current->maxFuel){
-
-            //if from the temp station the next station is not reachable, the path doesn't exist
-            if (temp->left == NULL) {
-                if(temp->maxFuel <= 0 || temp->distance + temp->maxFuel < temp->right->distance){
-                    return NULL;
-                }
-
-                //see if the station is the new best
-                int distToEvaluate = end->distance - (temp->distance + temp->maxFuel);
-                if( distToEvaluate < shortestDistToEnd){
-                    nextBestStation = temp;
-                    shortestDistToEnd = distToEvaluate;
-                } else if(distToEvaluate == shortestDistToEnd){
-                    if(temp->distance < nextBestStation->distance){
-                        nextBestStation = temp;
-                    }
-                }
-                //if the successive station is reachable from the current one, proceed
-                if(current->maxFuel >= (temp->right->distance - current->distance)){
-                    temp = temp->right;
-                } else
-                    return NULL;
-
-            } else {
-                // find the predecessor in the left subtree
-                predecessor = temp->left;
-                while (predecessor->right != NULL && predecessor->right != temp) {
-                    predecessor = predecessor->right;
-                }
-
-                if (predecessor->right == NULL) {
-                    // if the predecessor's right is null, establish a temporary link from the predecessor to the current node
-                    predecessor->right = temp;
-                    temp = temp->left;
-                } else {
-                    // if the predecessor's right is the current node, revert the temporary link and print the current node
-                    predecessor->right = NULL;
-
-                    //see if the station is the new best
-                    int distToEvaluate = end->distance - (temp->distance + temp->maxFuel);
-                    if( distToEvaluate < shortestDistToEnd){
-                        nextBestStation = temp;
-                        shortestDistToEnd = distToEvaluate;
-                    } else if(distToEvaluate == shortestDistToEnd){
-                        if(temp->distance < nextBestStation->distance){
-                            nextBestStation = temp;
-                        }
-                    }
-                    //if the next station is reachable from the current one, proceed
-                    if(current->maxFuel >= (temp->right->distance - current->distance)){
-                        temp = temp->right;
-                    } else
-                        return NULL;
-
-                    temp = temp->right;
-                }
-            }
-        }
-        //bestPath is a pointer to the head of the path list
-        bestPath = add(bestPath, nextBestStation);
-        if(end->distance - nextBestStation->distance <= nextBestStation->maxFuel){
-            bestPath = add(bestPath,end);
-            found = 1;
-        } else {
-            current = nextBestStation;
-        }
-
-    }
-    return bestPath;
-
-}
-
 
 pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
 
-    statBST_t *current = start;
+    statBST_t *current = NULL;
     pathList_t * bestPath = NULL;
     statBST_t * nextBestStation = NULL;
     statBST_t * temp = NULL;
@@ -567,37 +485,54 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
 
     }
 
+}
 
+pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t * end){
 
-    //find the first next station
-    /*temp = successor(root, start);
-    nextBestStation = temp;
-    while(current != NULL && current != end){
-        shortestDistToEnd = end->distance - current->distance;
+    statBST_t *current = NULL;
+    pathList_t * bestPath = NULL;
+    statBST_t * nextBestStation = NULL;
+    statBST_t * temp = NULL;
+    int maxReachableDist = 0;
+    int newReachableDist = 0;
 
-        while(temp != end){
-            tempNext = successor(root, temp);
-            if(temp->maxFuel != 0 && temp->maxFuel + temp->distance >= tempNext->distance) {
-                if((end->distance - (temp->distance + temp->maxFuel)) < shortestDistToEnd){
-                    nextBestStation = temp;
-                    temp = tempNext;
-                }
+    if(start->maxFuel == 0)
+        return NULL; //can't reach next station;
+
+    bestPath = createNewPath(start->distance);
+
+    if(start->distance - start->maxFuel <= end->distance){
+        bestPath = add(bestPath, end);
+        return bestPath; //can reach end station directly
+    }
+
+    current = start;
+    while(current != end){
+        temp = predecessor(root, current);
+        maxReachableDist = current->distance - current->maxFuel;
+        if(maxReachableDist <= end->distance){
+            bestPath = add(bestPath, end);
+            return bestPath;
+        }
+        newReachableDist = start->distance;
+        while(temp->distance >= maxReachableDist && temp != end && temp != NULL){
+            if(temp->distance - temp->maxFuel < newReachableDist){
+                newReachableDist = temp->distance - temp->maxFuel;
+                nextBestStation = temp;
+            } else if(temp->distance - temp->maxFuel == newReachableDist && temp->distance < nextBestStation->distance){
+                nextBestStation = temp;
             }
-
+            temp = predecessor(root, temp);
         }
-        //bestPath is a pointer to the head of the path list
+        if(newReachableDist == 0 || (temp == NULL && nextBestStation != end))
+            return NULL;
         bestPath = add(bestPath, nextBestStation);
-        if(nextBestStation->distance == end->distance){
-            return bestPath;
-        }
-        if(end->distance - nextBestStation->distance <= nextBestStation->maxFuel){
-            bestPath = add(bestPath,end);
-            return bestPath;
-        }
         current = nextBestStation;
-    }*/
+
+    }
 
 }
+
 
 pathList_t *add(pathList_t * headStation, statBST_t * station) {
 
@@ -637,4 +572,22 @@ statBST_t * successor(statBST_t * root, statBST_t * target)
     }
 
     return successor;
+}
+
+statBST_t * predecessor(statBST_t * root, statBST_t * target)
+{
+    statBST_t *predecessor = NULL;
+
+    while (root != NULL) {
+        if (target->distance > root->distance) {
+            // If target is in the right subtree, update the predecessor and move to the right subtree
+            predecessor = root;
+            root = root->right;
+        } else {
+            // If target is in the left subtree, move to the left subtree
+            root = root->left;
+        }
+    }
+
+    return predecessor;
 }
