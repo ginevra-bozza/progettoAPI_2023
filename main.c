@@ -47,6 +47,8 @@ statBST_t *checkStation(statBST_t *, int distance);
 statBST_t* min(statBST_t*);
 statBST_t* successor(statBST_t*, statBST_t*);
 
+void printTree(statBST_t *root); //debug!!!!
+
 
 
 void fromBSTtoList(statBST_t *, int, int, stationList_t **, int *stationCount);
@@ -107,6 +109,7 @@ int main(){
                         addedStation->maxFuel = carAutonomy;
                 }
                 printf("aggiunta");
+                printf(" numero %d", distance);
             } else {
                 printf("non aggiunta");
                 free(station);
@@ -201,8 +204,11 @@ int main(){
 
             }
 
-        } else {
+        } /*else {
             printf("aaaaaaa");
+        }*/
+        else if(strcmp(input, "stampa-albero") == 0){
+            printTree(sRoot);
         }
     }
 
@@ -275,11 +281,11 @@ statBST_t * addStation(statBST_t ** root, int dist){
 int removeStation (statBST_t ** root, int dist)
 {
     statBST_t* current = *root;
-    statBST_t* parent = NULL;
+    statBST_t* predecessor = NULL;
 
 
     while (current != NULL && current->distance != dist) {
-        parent = current;
+        predecessor = current;
         if (dist < current->distance)
             current = current->left;
         else
@@ -289,9 +295,16 @@ int removeStation (statBST_t ** root, int dist)
         return 0; //the station is not present and cannot be deleted
     }
 
-    //the station has 0 or only 1 child
-    if (current->left == NULL || current->right == NULL) {
+    //the station has 0 children
+    if(current->left == NULL && current->right == NULL){
+        if(predecessor->left == current){
+            predecessor->left = NULL;
+        } else {
+            predecessor->right= NULL;
+        }
+        free(current);
 
+    } else if (current->left == NULL || current->right == NULL) { //the station has 1 child
         statBST_t * tempSt;
 
         if (current->left == NULL)
@@ -299,14 +312,15 @@ int removeStation (statBST_t ** root, int dist)
         else
             tempSt = current->left;
 
-        if (current == parent->left)
-            parent->left = tempSt;
+        tempSt->parent = predecessor;
+        if (current == predecessor->left)
+            predecessor->left = tempSt;
         else
-            parent->right = tempSt;
+            predecessor->right = tempSt;
 
         free(current);
 
-    } else { //the station node has 2 children
+    } else { //the station has 2 children
         statBST_t * temp1 = NULL;
         statBST_t * temp2 = NULL;
 
@@ -590,4 +604,14 @@ statBST_t * predecessor(statBST_t * root, statBST_t * target)
     }
 
     return predecessor;
+}
+
+void printTree(statBST_t *root) {
+    if (root == NULL) {
+        return;
+    }
+
+    printTree(root->left);
+    printf("%d ", root->distance);
+    printTree(root->right);
 }
