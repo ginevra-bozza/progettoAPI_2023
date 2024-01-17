@@ -498,6 +498,7 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
         current = nextBestStation;
 
     }
+    return NULL;
 
 }
 
@@ -544,6 +545,7 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
         current = nextBestStation;
 
     }
+    return NULL;
 
 }
 
