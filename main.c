@@ -35,8 +35,6 @@ typedef struct pathList_s{
     int statDist;
 } pathList_t;
 
-int stringCmp(const char* , const char* );
-
 statBST_t *addStation(statBST_t **, int);
 int addCar(carBST_t **, int);
 int removeStation(statBST_t **, int);
@@ -44,14 +42,9 @@ int removeCar(carBST_t **, int);
 pathList_t *findBestPath(statBST_t *,statBST_t *, statBST_t* );
 pathList_t *findBestPathReversed(statBST_t *,statBST_t *, statBST_t* );
 statBST_t *checkStation(statBST_t *, int distance);
-statBST_t* min(statBST_t*);
 statBST_t* successor(statBST_t*, statBST_t*);
 
 void printTree(statBST_t *root); //debug!!!!
-
-
-
-void fromBSTtoList(statBST_t *, int, int, stationList_t **, int *stationCount);
 
 int findNewMaxFuel(carBST_t *);
 
@@ -87,14 +80,11 @@ int main(){
     while(!feof(stdin)) {
         scanf("%s",input);
         if (strcmp(input, ADDSTAT) == 0) {
-            printf("ADDSTAT\n");
-
             scanf("%d", &distance);
             addedStation = addStation(&sRoot,distance); //addStation return a pointer to the newly added station if added, else return NULL
 
             if (addedStation != NULL) {
                 scanf("%d", &numOfCars);
-                printf("Num of cars: %d", numOfCars);
                 addedStation->carCount = numOfCars;
                 addedStation->maxFuel = 0;
                 carParking = malloc(sizeof(carBST_t));
@@ -108,29 +98,24 @@ int main(){
                     if(carAutonomy > addedStation->maxFuel)
                         addedStation->maxFuel = carAutonomy;
                 }
-                printf("aggiunta");
-                printf(" numero %d", distance);
+                printf("aggiunta\n");
             } else {
-                printf("non aggiunta");
-                free(station);
+                printf("non aggiunta\n");
             }
 
         } else if (strcmp(input, REMOVESTAT) == 0) {
-            printf("REMOVESTAT");
-
             scanf("%d", &distance);
             if (distance > 0) {
                 if (removeStation(&sRoot, distance)) {
-                    printf("demolita");
+                    printf("demolita\n");
                 } else {
-                    printf("non demolita");
+                    printf("non demolita\n");
                 }
             } else {
                 printf("Error in removal - invalid distance");
             }
 
         } else if (strcmp(input, ADDCAR) == 0) {
-            printf("ADDCAR");
             scanf("%d", &distance);
             scanf("%d", &carAutonomy);
 
@@ -139,13 +124,12 @@ int main(){
                 addCar((carBST_t **) &station->parking, carAutonomy);
                 if(carAutonomy > station->maxFuel)
                     station->maxFuel = carAutonomy;
-                printf("aggiunta");
+                printf("aggiunta\n");
             } else {
-                printf("non aggiunta");
+                printf("non aggiunta\n");
             }
 
         } else if (strcmp(input, REMOVECAR) == 0) {
-            printf("REMOVECAR");
             scanf("%d", &distance);
             scanf("%d", &carAutonomy);
 
@@ -155,16 +139,15 @@ int main(){
                     if(station->maxFuel == carAutonomy){
                         station->maxFuel = findNewMaxFuel(station->parking);
                     }
-                    printf("demolita");
+                    printf("rottamata\n");
                 } else {
-                    printf("non demolita");
+                    printf("non rottamata\n");
                 }
             } else {
-                printf("non demolita");
+                printf("non rottamata\n");
             }
 
         } else if (strcmp(input, BESTROUTE) == 0) {
-            printf("BESTROUTE");
             int start,end;
             statBST_t * startStat = NULL;
             statBST_t *endStat = NULL;
@@ -177,7 +160,7 @@ int main(){
             endStat = checkStation(sRoot, end);
 
             if(startStat == NULL || endStat == NULL){
-                printf(("nessun percorso"));
+                printf(("nessun percorso\n"));
             }
             else{
                 pathList_t * bestPath = NULL;
@@ -190,16 +173,17 @@ int main(){
                 }
 
                 if(bestPath == NULL){
-                    printf("nessun percorso");
+                    printf("nessun percorso\n");
                 } else {
                     pathList_t * s = bestPath;
                     pathList_t * temp = NULL;
                     while(s != NULL){
-                        printf(" %d ", s->statDist);
+                        printf("%d ", s->statDist);
                         temp = s->next;
                         free(s);
                         s = temp;
                     }
+                    printf("\n");
                 }
 
             }
@@ -283,7 +267,6 @@ int removeStation (statBST_t ** root, int dist)
     statBST_t* current = *root;
     statBST_t* predecessor = NULL;
 
-
     while (current != NULL && current->distance != dist) {
         predecessor = current;
         if (dist < current->distance)
@@ -297,12 +280,7 @@ int removeStation (statBST_t ** root, int dist)
 
     //the station has 0 children
     if(current->left == NULL && current->right == NULL){
-        if(predecessor->left == current){
-            predecessor->left = NULL;
-        } else {
-            predecessor->right= NULL;
-        }
-        free(current);
+        free(current); //free mette il puntatore a NULL?????
 
     } else if (current->left == NULL || current->right == NULL) { //the station has 1 child
         statBST_t * tempSt;
@@ -321,6 +299,7 @@ int removeStation (statBST_t ** root, int dist)
         free(current);
 
     } else { //the station has 2 children
+        /*+++++********************************++ NON FUNZIONA DA CONTROLLARE **********************/
         statBST_t * temp1 = NULL;
         statBST_t * temp2 = NULL;
 
@@ -338,6 +317,7 @@ int removeStation (statBST_t ** root, int dist)
         current->distance = temp2->distance;
         free(temp2);
     }
+    /*+++++********************************++***********************************************************/
     return 1; //station deleted successfully
 }
 
