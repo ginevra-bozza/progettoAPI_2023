@@ -41,6 +41,9 @@ int removeStation(statBST_t **, int);
 int removeCar(carBST_t **, int);
 pathList_t *findBestPath(statBST_t *,statBST_t *, statBST_t* );
 pathList_t *findBestPathReversed(statBST_t *,statBST_t *, statBST_t* );
+pathList_t * findBetterOption (pathList_t * , statBST_t * , statBST_t * , statBST_t *);
+
+
 statBST_t *checkStation(statBST_t *, int distance);
 statBST_t* successor(statBST_t*, statBST_t*);
 
@@ -49,9 +52,11 @@ void printTree(statBST_t *root); //debug!!!!
 int findNewMaxFuel(carBST_t *);
 
 pathList_t *createNewPath(int startDistance);
-pathList_t *add(pathList_t *pS, statBST_t *pS1);
+pathList_t *addToPath(pathList_t *headStation, int stationDist);
 
 statBST_t *predecessor(statBST_t *, statBST_t *);
+
+void printReverse(pathList_t *);
 
 int main(){
     statBST_t *sRoot = NULL; //root of the BST containing all stations
@@ -87,17 +92,23 @@ int main(){
                 scanf("%d", &numOfCars);
                 addedStation->carCount = numOfCars;
                 addedStation->maxFuel = 0;
-                carParking = malloc(sizeof(carBST_t));
-                if (carParking == NULL) {
-                    printf("Memory allocation error - new parking");
-                    return 1;
+
+                //root node of the car parking bst
+                addedStation->parking = (carBST_t* )malloc(sizeof (carBST_t));
+                addedStation->parking->autonomy = 0;
+                addedStation->parking->right = NULL;
+                addedStation->parking->left = NULL;
+                addedStation->parking->carCounter = 0;
+
+                if(numOfCars > 0){
+                    for (int i = 1; i <= numOfCars; i++) {
+                        scanf("%d", &carAutonomy);
+                        addCar(&addedStation->parking, carAutonomy);
+                        if(carAutonomy > addedStation->maxFuel)
+                            addedStation->maxFuel = carAutonomy;
+                    }
                 }
-                for (int i = 1; i <= numOfCars; i++) {
-                    scanf("%d", &carAutonomy);
-                    addCar(&addedStation->parking, carAutonomy);
-                    if(carAutonomy > addedStation->maxFuel)
-                        addedStation->maxFuel = carAutonomy;
-                }
+
                 printf("aggiunta\n");
             } else {
                 printf("non aggiunta\n");
@@ -166,13 +177,31 @@ int main(){
                 pathList_t * bestPath = NULL;
                 if(start < end){
                     bestPath = findBestPath(sRoot,startStat, endStat);
+                    if(bestPath == NULL){
+                        printf("nessun percorso");
+                    } else {
+                        printReverse(bestPath);
+                    }
                 } else if(start > end){
                     bestPath = findBestPathReversed(sRoot,startStat, endStat);
+                    if(bestPath == NULL){
+                        printf("nessun percorso");
+                    } else {
+                        pathList_t *s = bestPath;
+                        pathList_t *temp = NULL;
+                        while (s != NULL) {
+                            printf("%d ", s->statDist);
+                            temp = s->next;
+                            free(s);
+                            s = temp;
+                        }
+                    }
                 } else if(start == end){
-                    bestPath = createNewPath(start);
+                    printf("%d %d",start,end);
                 }
+                printf("\n");
 
-                if(bestPath == NULL){
+                /*if(bestPath == NULL){
                     printf("nessun percorso\n");
                 } else {
                     pathList_t * s = bestPath;
@@ -184,7 +213,7 @@ int main(){
                         s = temp;
                     }
                     printf("\n");
-                }
+                }*/
 
             }
 
@@ -299,25 +328,22 @@ int removeStation (statBST_t ** root, int dist)
         free(current);
 
     } else { //the station has 2 children
-        /*+++++********************************++ NON FUNZIONA DA CONTROLLARE **********************/
-        statBST_t * temp1 = NULL;
-        statBST_t * temp2 = NULL;
+        statBST_t * temp = NULL;
+        statBST_t * parent = NULL;
 
-        temp2 = current->right;
-        while (temp2->left != NULL) {
-            temp1 = temp2;
-            temp2 = temp2->left;
-        }
+        temp = current->right;
 
-        if (temp1 != NULL)
-            temp1->left = temp2->right;
+        temp = successor((*root),temp);
+        parent = temp->parent;
+
+        if (parent != NULL)
+            parent->left = temp->right;
         else
-            current->right = temp2->right;
+            parent->right = temp->right;
 
-        current->distance = temp2->distance;
-        free(temp2);
+        current->distance = temp->distance;
+        free(temp);
     }
-    /*+++++********************************++***********************************************************/
     return 1; //station deleted successfully
 }
 
@@ -329,7 +355,7 @@ int addCar(carBST_t ** root, int autonomy) {
     carBST_t *parent = NULL;
     carBST_t *car = NULL;
 
-    if(current == NULL){
+   /* if(current == NULL){
         car = malloc(sizeof (carBST_t ));
         if(car == NULL){
             printf("Memory allocation error - new car");
@@ -342,7 +368,7 @@ int addCar(carBST_t ** root, int autonomy) {
 
         *root = car;
         return 1;
-    }
+    }*/
 
     while (current != NULL) {
         if (autonomy == current->autonomy) {
@@ -368,7 +394,6 @@ int addCar(carBST_t ** root, int autonomy) {
     car->left = NULL;
 
     //insert the car in the tree
-
     if(autonomy < parent->autonomy)
         parent->left = car;
     else
@@ -396,21 +421,23 @@ int removeCar(carBST_t ** root, int aut) {
         current->carCounter--;
         return 1;
     }
+    //the car has 0 children
+    if(current->right == NULL && current->left == NULL){
+        free(current);
 
-    //the car has 0 or only 1 child
-    if (current->left == NULL || current->right == NULL) {
-
-        carBST_t * tempC;
+    //the car has only 1 child
+    } else if ((current->left == NULL && current->right != NULL)|| (current->right == NULL && current->left != NULL)) {
+        carBST_t * temp;
 
         if (current->left == NULL)
-            tempC = current->right;
+            temp = current->right;
         else
-            tempC = current->left;
+            temp = current->left;
 
         if (current == parent->left)
-            parent->left = tempC;
+            parent->left = temp;
         else
-            parent->right = tempC;
+            parent->right = temp;
 
         free(current);
 
@@ -432,12 +459,12 @@ int removeCar(carBST_t ** root, int aut) {
         current->autonomy = temp2->autonomy;
         free(temp2);
     }
-    return 1; //car deleted successfully
+    return 1;
 
 }
 
 
-pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
+/*pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
 
     statBST_t *current = NULL;
     pathList_t * bestPath = NULL;
@@ -445,6 +472,7 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
     statBST_t * temp = NULL;
     int maxReachableDist = 0;
     int newReachableDist = 0;
+    int pathFound = 0;
 
     if(start->maxFuel == 0)
         return NULL; //can't reach next station;
@@ -452,7 +480,7 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
     bestPath = createNewPath(start->distance);
 
     if(start->maxFuel + start->distance >= end->distance){
-        bestPath = add(bestPath, end);
+        bestPath = addToPath(bestPath, end->distance);
         return bestPath; //can reach end station directly
     }
 
@@ -461,11 +489,12 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
         temp = successor(root, current);
         maxReachableDist = current->distance + current->maxFuel;
         if(maxReachableDist >= end->distance){
-            bestPath = add(bestPath, end);
-            return bestPath;
+            bestPath = addToPath(bestPath, end->distance);
+           // return bestPath;
+           break;
         }
         newReachableDist = 0;
-        while(temp->distance <= maxReachableDist && temp != end && temp != NULL){
+        while(temp->distance <= maxReachableDist && temp != end){
             if(temp->distance + temp->maxFuel > newReachableDist){
                 newReachableDist = temp->distance + temp->maxFuel;
                 nextBestStation = temp;
@@ -474,12 +503,72 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
         }
         if(newReachableDist == 0 || (temp == NULL && nextBestStation != end))
             return NULL;
-        bestPath = add(bestPath, nextBestStation);
+        bestPath = addToPath(bestPath, nextBestStation->distance);
         current = nextBestStation;
 
     }
-    return NULL;
 
+    pathList_t * alternativePath = findBetterOption(bestPath, root, start, end);
+
+    if(alternativePath != NULL)
+        return alternativePath;
+    return bestPath;
+
+
+}*/
+
+pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
+    statBST_t *current = NULL;
+    pathList_t * bestPath = NULL;
+    statBST_t * nextBestStation = NULL;
+    statBST_t * temp = NULL;
+    int stationPresent = 0;
+
+    if(start->maxFuel == 0)
+        return NULL; //can't reach next station;
+
+    bestPath = createNewPath(end->distance);
+
+    if(start->maxFuel + start->distance >= end->distance){
+        bestPath = addToPath(bestPath, start->distance);
+        return bestPath; //can reach end station directly
+    }
+
+    //starting from the last station, goes backward checking all the stations to find the one closer to the start from which I can reach the current one
+    current = end;
+    while(current != start){
+        temp = predecessor(root, current);
+        if(temp == start && start->maxFuel + start->distance >= current->distance){
+            bestPath = addToPath(bestPath, start->distance);
+            return bestPath;
+        }
+        nextBestStation = current;
+        stationPresent = 0;
+        while(temp != start){
+            //checks all the previous stations from current to start
+            if(temp->distance + temp->maxFuel >= current-> distance && temp->distance <= nextBestStation->distance){
+                nextBestStation = temp;
+                stationPresent = 1;
+            }
+            temp = predecessor(root, temp);
+        }
+        if(!stationPresent){
+            //free the memory of the rest of the path
+            pathList_t * p = bestPath;
+            pathList_t * s = NULL;
+            while(p != NULL){
+                s = p->next;
+                free(p);
+                p = s;
+            }
+            return NULL; //there's no station from where I can reach the current one
+        }
+        bestPath = addToPath(bestPath, nextBestStation->distance);
+        current = nextBestStation;
+    }
+    bestPath = addToPath(bestPath, start->distance);
+
+    return bestPath;
 }
 
 pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t * end){
@@ -497,7 +586,7 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
     bestPath = createNewPath(start->distance);
 
     if(start->distance - start->maxFuel <= end->distance){
-        bestPath = add(bestPath, end);
+        bestPath = addToPath(bestPath, end->distance);
         return bestPath; //can reach end station directly
     }
 
@@ -506,7 +595,7 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
         temp = predecessor(root, current);
         maxReachableDist = current->distance - current->maxFuel;
         if(maxReachableDist <= end->distance){
-            bestPath = add(bestPath, end);
+            bestPath = addToPath(bestPath, end->distance);
             return bestPath;
         }
         newReachableDist = start->distance;
@@ -518,10 +607,12 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
                 nextBestStation = temp;
             }
             temp = predecessor(root, temp);
+
         }
-        if(newReachableDist == 0 || (temp == NULL && nextBestStation != end))
+        if(newReachableDist == 0 || (nextBestStation == NULL))
             return NULL;
-        bestPath = add(bestPath, nextBestStation);
+
+        bestPath = addToPath(bestPath, nextBestStation->distance);
         current = nextBestStation;
 
     }
@@ -529,12 +620,62 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
 
 }
 
+pathList_t * findBetterOption (pathList_t * bestPath, statBST_t * root, statBST_t * start, statBST_t *end) {
 
-pathList_t *add(pathList_t * headStation, statBST_t * station) {
+    pathList_t *currentListNode = bestPath;
+    statBST_t *currBSTNode = start;
+    pathList_t *alternativePath = createNewPath(start->distance);
+    pathList_t *alternativePath2 = createNewPath(start->distance);
+    pathList_t *statToCompare;
+    int distToCompare;
+    int distToReach;
+    int toChange = 0; //the path needs to be revised further because one of the elements changed
+
+    while (currentListNode != NULL && distToReach != end->distance) {
+        //int currentDist = currentListNode->statDist;
+        statToCompare = currentListNode->next;
+        distToCompare = statToCompare->statDist;
+        distToReach = statToCompare->next->statDist;
+        int isBetter = 0;
+
+        while (currBSTNode->distance < distToCompare && isBetter != 1 && distToReach != end->distance) {
+            currBSTNode = successor(root, currBSTNode);
+            if (currBSTNode->distance + currBSTNode->maxFuel >= distToReach && currBSTNode->distance < distToCompare) {
+                isBetter = 1;
+                toChange = 1;
+
+            }
+        }
+        if(isBetter == 1)
+            alternativePath = addToPath(alternativePath, currBSTNode->distance);
+        else {
+            alternativePath = addToPath(alternativePath, distToCompare);
+        }
+        if(distToReach == end->distance){
+            alternativePath = addToPath(alternativePath, distToReach);
+        } else {
+            currentListNode = currentListNode->next;
+
+        }
+    }
+
+    if(toChange){
+        alternativePath2 = findBetterOption(alternativePath, root, start, end);
+        if(alternativePath2 != NULL){
+            return alternativePath2;
+        }
+        return alternativePath;
+    }
+    return NULL;
+
+}
+
+
+pathList_t *addToPath(pathList_t * headStation, int stationDist) {
 
     pathList_t * newNode = (pathList_t*) malloc(sizeof (pathList_t));
     newNode->next = NULL;
-    newNode->statDist = station->distance;
+    newNode->statDist = stationDist;
 
     pathList_t * temp = headStation;
     while(temp->next!=NULL)
@@ -586,6 +727,15 @@ statBST_t * predecessor(statBST_t * root, statBST_t * target)
     }
 
     return predecessor;
+}
+
+
+void printReverse(pathList_t * start)
+{
+    if (start == NULL)
+        return;
+    printReverse(start->next);
+    printf("%d ", start->statDist);
 }
 
 void printTree(statBST_t *root) {
