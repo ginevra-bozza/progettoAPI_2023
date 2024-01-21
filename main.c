@@ -329,18 +329,6 @@ int removeStation (statBST_t ** root, int dist)
         statBST_t * temp1 = NULL;
         statBST_t * temp2 = NULL;
 
-        /*temp = current->right;
-
-        temp = successor((*root),temp);
-        parent = temp->parent;
-
-        if (parent != NULL)
-            parent->left = temp->right;
-        else
-            parent->right = temp->right;
-
-        current->distance = temp->distance;
-        free(temp);*/
         temp2 = current->right;
         while (temp2->left != NULL) {
             temp1 = temp2;
@@ -350,7 +338,9 @@ int removeStation (statBST_t ** root, int dist)
         if (temp1 != NULL)
             temp1->left = temp2->right;
         else{
+
             current->right = temp2->right;
+            //problema SIGSEGV temp->right è NULL in diversi casi !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             temp2->right->parent = current;
         }
 
@@ -369,21 +359,6 @@ int addCar(carBST_t ** root, int autonomy) {
     carBST_t *current = *root;
     carBST_t *parent = *root;
     carBST_t *car = NULL;
-
-   /* if(current == NULL){
-        car = malloc(sizeof (carBST_t ));
-        if(car == NULL){
-            printf("Memory allocation error - new car");
-            return 0;
-        }
-        car->carCounter = 1;
-        car->autonomy = autonomy;
-        car->right = NULL;
-        car->left = NULL;
-
-        *root = car;
-        return 1;
-    }*/
 
     while (current != NULL) {
         if (autonomy == current->autonomy) {
@@ -527,68 +502,17 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
             return NULL; //there's no station from where I can reach the current one
         }
         bestPath = addToPath(bestPath, nextBestStation);
+        printf("%d\n",nextBestStation->distance);
         current = nextBestStation;
+        if(start->distance + start->maxFuel >= nextBestStation->distance){
+            bestPath = addToPath(bestPath, start);
+            return bestPath;
+        }
     }
     bestPath = addToPath(bestPath, start);
 
     return bestPath;
 }
-
-/*pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t * end){
-
-    statBST_t *current = NULL;
-    pathList_t * bestPath = NULL;
-    statBST_t * nextBestStation = NULL;
-    statBST_t * temp = NULL;
-    int maxReachableDist = 0;
-    int newReachableDist = 0;
-    int pathFound = 0;
-
-    if(start->maxFuel == 0)
-        return NULL; //can't reach next station;
-
-    //bestPath = createNewPath(start->distance);
-    bestPath = createNewPath(start);
-
-    if(start->distance - start->maxFuel <= end->distance){
-        bestPath = addToPath(bestPath, end);
-        return bestPath; //can reach end station directly
-    }
-
-    current = start;
-    while(current != end && !pathFound){
-       // temp = predecessor(root, current);
-        maxReachableDist = current->distance - current->maxFuel;
-        if(maxReachableDist <= end->distance){
-            bestPath = addToPath(bestPath, end);
-            pathFound = 1;
-        } else {
-
-            newReachableDist = start->distance;
-            //nextBestStation = start;
-
-            temp = predecessor(root, current);
-            while(temp->distance >= maxReachableDist && temp != end){
-                if(temp->distance - temp->maxFuel < newReachableDist){
-                    newReachableDist = temp->distance - temp->maxFuel;
-                    nextBestStation = temp;
-                } else if(temp->distance - temp->maxFuel == newReachableDist && temp->distance < nextBestStation->distance){
-                    nextBestStation = temp;
-                }
-                temp = predecessor(root, temp);
-
-
-            }
-            if(newReachableDist == start->distance || nextBestStation == NULL)
-                return NULL;
-
-            bestPath = addToPath(bestPath, nextBestStation);
-            current = nextBestStation;
-        }
-
-    }
-    return bestPath;
-}*/
 
 pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t * end){
 
