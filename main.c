@@ -301,10 +301,51 @@ int removeStation (statBST_t ** root, int dist)
         else
             current = current->right;
     }
+
+    //the station is not present and cannot be deleted
     if (current == NULL) {
-        return 0; //the station is not present and cannot be deleted
+        return 0;
     }
 
+    if(current->left == NULL || current->right == NULL){
+        statBST_t * temp;
+        if(current->left == NULL)
+            temp = current->right;
+        else
+            temp = current->left;
+
+        if(predecessor == NULL){
+            free(current);
+            return 1;
+        }
+        if(current == predecessor->left)
+            predecessor->left = temp;
+        else
+            predecessor->right = temp;
+
+        free(current);
+
+    } else {
+        statBST_t * parent = NULL;
+        statBST_t * temp;
+        temp = current->right;
+        while(temp->left != NULL){
+            parent = temp;
+            temp = temp->left;
+        }
+        if(parent != NULL)
+            parent->left = temp->right;
+        else
+            current->right = temp->right;
+        current->distance = temp->distance;
+        current->maxFuel = temp->maxFuel;
+        current->parking = temp->parking;
+        free(temp);
+    }
+
+
+
+/*
     //the station has 0 children
     if(current->left == NULL && current->right == NULL){
         free(current);
@@ -341,14 +382,14 @@ int removeStation (statBST_t ** root, int dist)
 
             current->right = temp2->right;
             //problema SIGSEGV temp->right è NULL in diversi casi !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            temp2->right->parent = current;
+            //temp2->right->parent = current;
         }
 
         current->distance = temp2->distance;
         current->maxFuel = temp2->maxFuel;
         current->parking= temp2->parking;
         free(temp2);
-    }
+    }*/
     return 1; //station deleted successfully
 }
 
@@ -502,7 +543,7 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
             return NULL; //there's no station from where I can reach the current one
         }
         bestPath = addToPath(bestPath, nextBestStation);
-        printf("%d\n",nextBestStation->distance);
+        //printf("%d\n",nextBestStation->distance);
         current = nextBestStation;
         if(start->distance + start->maxFuel >= nextBestStation->distance){
             bestPath = addToPath(bestPath, start);
