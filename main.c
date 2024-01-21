@@ -434,11 +434,11 @@ int addCar(carBST_t ** root, int autonomy) {
 }
 int removeCar(carBST_t ** root, int aut) {
     carBST_t * current = *root;
-    carBST_t * parent = NULL;
+    carBST_t * prev = NULL;
 
 
     while (current != NULL && current->autonomy != aut) {
-        parent = current;
+        prev = current;
         if (aut < current->autonomy)
             current = current->left;
         else
@@ -452,6 +452,46 @@ int removeCar(carBST_t ** root, int aut) {
         current->carCounter--;
         return 1;
     }
+
+    if(current->left == NULL || current->right == NULL){
+        carBST_t * temp;
+        if(current->left == NULL)
+            temp = current->right;
+        else
+            temp = current->left;
+
+        if(prev == NULL){
+            free(temp);
+            return 1;
+        }
+
+        if(current == prev->left)
+            prev->left = temp;
+        else
+            prev->right = temp;
+
+        free(current);
+    } else {
+        carBST_t * parent = NULL;
+        carBST_t * temp;
+        temp = current->right;
+        while(temp->left != NULL){
+            parent = temp;
+            temp = temp->left;
+        }
+        if(parent != NULL)
+            parent->left = temp->right;
+        else
+            current->right = temp->right;
+
+        current->autonomy = temp->autonomy;
+        current->carCounter = temp->carCounter;
+        free(temp);
+    }
+
+
+
+    /*
     //the car has 0 children
     if(current->right == NULL && current->left == NULL){
         free(current);
@@ -489,7 +529,7 @@ int removeCar(carBST_t ** root, int aut) {
 
         current->autonomy = temp2->autonomy;
         free(temp2);
-    }
+    }*/
     return 1;
 
 }
