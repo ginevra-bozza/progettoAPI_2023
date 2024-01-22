@@ -17,7 +17,6 @@ typedef struct carBST_s{
 
 typedef struct statBST_s{
     struct statBST_s *left, *right;
-    //struct statBST_s * parent;
     int distance;
     int maxFuel;
     carBST_t *parking;
@@ -37,21 +36,14 @@ int removeStation(statBST_t **, int);
 int removeCar(carBST_t **, int);
 pathList_t *findBestPath(statBST_t *,statBST_t *, statBST_t* );
 pathList_t *findBestPathReversed(statBST_t *,statBST_t *, statBST_t* );
-
-
 statBST_t *checkStation(statBST_t *, int distance);
 statBST_t* successor(statBST_t*, statBST_t*);
-
-void printTree(statBST_t *root); //debug!!!!
-
 int findNewMaxFuel(carBST_t *);
-
 pathList_t *createNewPath(statBST_t* );
 pathList_t *addToPath(pathList_t *headStation, statBST_t *station);
-
 statBST_t *predecessor(statBST_t *, statBST_t *);
-
 void printReverse(pathList_t *);
+void deallocatePath(pathList_t *);
 
 int main(){
     statBST_t *sRoot = NULL; //root of the BST containing all stations
@@ -76,13 +68,22 @@ int main(){
 
 
     while(!feof(stdin)) {
-        scanf("%s",input);
+        if(scanf("%s",input) == 0){
+            printf("Error in scanf");
+            return -1;
+        }
         if (strcmp(input, ADDSTAT) == 0) {
-            scanf("%d", &distance);
+            if(scanf("%d", &distance) == 0){
+                printf("Error in scanf");
+                return -1;
+            }
             addedStation = addStation(&sRoot,distance); //addStation return a pointer to the newly added station if added, else return NULL
 
             if (addedStation != NULL) {
-                scanf("%d", &numOfCars);
+                if(scanf("%d", &numOfCars) == 0){
+                    printf("Error in scanf");
+                    return -1;
+                }
                 addedStation->maxFuel = 0;
 
                 //root node of the car parking bst
@@ -94,7 +95,10 @@ int main(){
 
                 if(numOfCars > 0){
                     for (int i = 1; i <= numOfCars; i++) {
-                        scanf("%d", &carAutonomy);
+                        if(scanf("%d", &carAutonomy) == 0){
+                            printf("Error in scanf");
+                            return -1;
+                        }
                         addCar(&addedStation->parking, carAutonomy);
                         if(carAutonomy > addedStation->maxFuel)
                             addedStation->maxFuel = carAutonomy;
@@ -107,7 +111,10 @@ int main(){
             }
 
         } else if (strcmp(input, REMOVESTAT) == 0) {
-            scanf("%d", &distance);
+            if(scanf("%d", &distance) == 0){
+                printf("Error in scanf");
+                return -1;
+            }
             if (distance > 0) {
                 if (removeStation(&sRoot, distance)) {
                     printf("demolita\n");
@@ -119,8 +126,14 @@ int main(){
             }
 
         } else if (strcmp(input, ADDCAR) == 0) {
-            scanf("%d", &distance);
-            scanf("%d", &carAutonomy);
+            if(scanf("%d", &distance) == 0){
+                printf("Error in scanf");
+                return -1;
+            }
+            if(scanf("%d", &carAutonomy) == 0){
+                printf("Error in scanf");
+                return -1;
+            }
 
             station = checkStation(sRoot, distance);
             if(station != NULL){
@@ -133,8 +146,14 @@ int main(){
             }
 
         } else if (strcmp(input, REMOVECAR) == 0) {
-            scanf("%d", &distance);
-            scanf("%d", &carAutonomy);
+            if(scanf("%d", &distance) == 0){
+                printf("Error in scanf");
+                return -1;
+            }
+            if(scanf("%d", &carAutonomy) == 0){
+                printf("Error in scanf");
+                return -1;
+            }
 
             station = checkStation(sRoot,distance);
             if(station != NULL){
@@ -154,8 +173,14 @@ int main(){
             int start,end;
             statBST_t * startStat = NULL;
             statBST_t *endStat = NULL;
-            scanf("%d", &start);
-            scanf("%d", &end);
+            if(scanf("%d", &start) == 0){
+                printf("Error in scanf");
+                return -1;
+            }
+            if(scanf("%d", &end) == 0){
+                printf("Error in scanf");
+                return -1;
+            }
 
             startStat = checkStation(sRoot, start);
             endStat = checkStation(sRoot, end);
@@ -198,10 +223,6 @@ int main(){
                 printf("\n");
             }
         }
-        else if(strcmp(input, "stampa-albero") == 0){
-            printTree(sRoot);
-        }
-
         input[0] = 1;
 
     }
@@ -265,7 +286,6 @@ statBST_t * addStation(statBST_t ** root, int dist){
     station->right = NULL;
     station->left = NULL;
     station->parking = NULL;
-    //station->parent = parent;
 
     //insert the station in the tree
     if(parent != NULL){
@@ -492,7 +512,6 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
             return NULL; //there's no station from where I can reach the current one
         }
         bestPath = addToPath(bestPath, nextBestStation);
-        //printf("%d\n",nextBestStation->distance);
         current = nextBestStation;
         if(start->distance + start->maxFuel >= nextBestStation->distance){
             bestPath = addToPath(bestPath, start);
@@ -603,8 +622,11 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
     }
     revisedPath = addToPath(revisedPath, start);
 
-    if(isDifferent)
+    if(isDifferent){
+        deallocatePath(bestPath);
         return revisedPath;
+    }
+    deallocatePath(revisedPath);
     return bestPath;
 }
 
@@ -681,15 +703,16 @@ void printReverse(pathList_t * start)
     }
     printReverse(start->next);
     printf(" %d", start->statDist);
+
 }
 
-void printTree(statBST_t *root) {
-    if (root == NULL) {
-        return;
+void deallocatePath(pathList_t * path){
+    pathList_t *s = path;
+    pathList_t *temp = NULL;
+    while (s->next != NULL) {
+        temp = s->next;
+        free(s);
+        s = temp;
     }
 
-    printTree(root->left);
-    printf("%d ", root->distance);
-    printf("(%d)\n",root->maxFuel);
-    printTree(root->right);
 }
