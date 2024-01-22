@@ -17,7 +17,7 @@ typedef struct carBST_s{
 
 typedef struct statBST_s{
     struct statBST_s *left, *right;
-    struct statBST_s * parent;
+    //struct statBST_s * parent;
     int distance;
     int maxFuel;
     carBST_t *parking;
@@ -265,7 +265,7 @@ statBST_t * addStation(statBST_t ** root, int dist){
     station->right = NULL;
     station->left = NULL;
     station->parking = NULL;
-    station->parent = parent;
+    //station->parent = parent;
 
     //insert the station in the tree
     if(parent != NULL){
@@ -343,53 +343,6 @@ int removeStation (statBST_t ** root, int dist)
         free(temp);
     }
 
-
-
-/*
-    //the station has 0 children
-    if(current->left == NULL && current->right == NULL){
-        free(current);
-
-    } else if ((current->left == NULL && current->right != NULL) || (current->right == NULL && current->left != NULL)) { //the station has 1 child
-        statBST_t * tempSt;
-
-        if (current->left == NULL)
-            tempSt = current->right;
-        else
-            tempSt = current->left;
-
-        tempSt->parent = predecessor;
-        if (current == predecessor->left)
-            predecessor->left = tempSt;
-        else
-            predecessor->right = tempSt;
-
-        free(current);
-
-    } else { //the station has 2 children
-        statBST_t * temp1 = NULL;
-        statBST_t * temp2 = NULL;
-
-        temp2 = current->right;
-        while (temp2->left != NULL) {
-            temp1 = temp2;
-            temp2 = temp2->left;
-        }
-
-        if (temp1 != NULL)
-            temp1->left = temp2->right;
-        else{
-
-            current->right = temp2->right;
-            //problema SIGSEGV temp->right è NULL in diversi casi !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //temp2->right->parent = current;
-        }
-
-        current->distance = temp2->distance;
-        current->maxFuel = temp2->maxFuel;
-        current->parking= temp2->parking;
-        free(temp2);
-    }*/
     return 1; //station deleted successfully
 }
 
@@ -488,48 +441,6 @@ int removeCar(carBST_t ** root, int aut) {
         current->carCounter = temp->carCounter;
         free(temp);
     }
-
-
-
-    /*
-    //the car has 0 children
-    if(current->right == NULL && current->left == NULL){
-        free(current);
-
-    //the car has only 1 child
-    } else if ((current->left == NULL && current->right != NULL)|| (current->right == NULL && current->left != NULL)) {
-        carBST_t * temp;
-
-        if (current->left == NULL)
-            temp = current->right;
-        else
-            temp = current->left;
-
-        if (current == parent->left)
-            parent->left = temp;
-        else
-            parent->right = temp;
-
-        free(current);
-
-    } else { //the station node has 2 children
-        carBST_t * temp1 = NULL;
-        carBST_t * temp2 = NULL;
-
-        temp2 = current->right;
-        while (temp2->left != NULL) {
-            temp1 = temp2;
-            temp2 = temp2->left;
-        }
-
-        if (temp1 != NULL)
-            temp1->left = temp2->right;
-        else
-            current->right = temp2->right;
-
-        current->autonomy = temp2->autonomy;
-        free(temp2);
-    }*/
     return 1;
 
 }
@@ -540,19 +451,17 @@ pathList_t * findBestPath(statBST_t * root,statBST_t * start, statBST_t * end){
     pathList_t * bestPath = NULL;
     statBST_t * nextBestStation = NULL;
     statBST_t * temp = NULL;
-    int stationPresent = 0;
+    int stationPresent;
 
     if(start->maxFuel == 0)
         return NULL; //can't reach next station;
 
-    //bestPath = createNewPath(end->distance);
     bestPath = createNewPath(end);
 
     if(start->maxFuel + start->distance >= end->distance){
         bestPath = addToPath(bestPath, start);
         return bestPath; //can reach end station directly
     }
-
     //starting from the last station, goes backward checking all the stations to find the one closer to the start from which I can reach the current one
     current = end;
     while(current != start){
@@ -601,8 +510,8 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
     pathList_t * bestPath = NULL;
     statBST_t * nextBestStation = NULL;
     statBST_t * temp = NULL;
-    int maxReachableDist = 0;
-    int newReachableDist = 0;
+    int maxReachableDist;
+    int newReachableDist;
     int pathFound = 0;
 
     if(start->maxFuel == 0)
@@ -659,13 +568,15 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
     }
 
     revisedPath = createNewPath(end);
+    sBST1 = s1->station;
 
     while(s1->prev->prev != NULL && s1->prev != NULL){
         s2 = s1->prev;
         s3 = s2->prev;
 
       //  while(s1->statDist != start->distance){
-        sBST1 = s1->station;
+        //sBST1 = s1->station;
+
         sBST2 = s2->station;
         sBST3 = s3->station;
         newSBst2 = NULL;
@@ -682,9 +593,12 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
             if(newSBst2 != NULL){
                 revisedPath = addToPath(revisedPath, newSBst2);
                 isDifferent = 1;
+                sBST1 = newSBst2;
             }
-            else
+            else{
                 revisedPath = addToPath(revisedPath, sBST2);
+                sBST1 = sBST2;
+            }
         }
 
         //toDelete = s1;
