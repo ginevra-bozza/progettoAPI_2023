@@ -574,15 +574,14 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
         s2 = s1->prev;
         s3 = s2->prev;
 
-      //  while(s1->statDist != start->distance){
-        //sBST1 = s1->station;
-
         sBST2 = s2->station;
         sBST3 = s3->station;
         newSBst2 = NULL;
+
         tempBST2 = successor(root, sBST1);
         if(tempBST2->distance == s2->statDist){
             revisedPath = addToPath(revisedPath, sBST2);
+            sBST1 = sBST2;
         } else {
             while(tempBST2->distance < sBST2->distance && newSBst2 == NULL){
                 if(tempBST2->distance >= (sBST3->distance - sBST3->maxFuel) && tempBST2->distance - tempBST2->maxFuel <= sBST1->distance){
@@ -600,16 +599,9 @@ pathList_t * findBestPathReversed(statBST_t * root,statBST_t * start, statBST_t 
                 sBST1 = sBST2;
             }
         }
-
-        //toDelete = s1;
         s1 = s2;
-        //free(toDelete)
-       // }
-
     }
     revisedPath = addToPath(revisedPath, start);
-    //free(s2)
-    //free(s3)
 
     if(isDifferent)
         return revisedPath;
